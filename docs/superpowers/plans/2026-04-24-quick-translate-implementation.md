@@ -6,7 +6,7 @@
 
 **Architecture:** Use a SwiftPM package with a tested `QuickTranslateCore` library and a `QuickTranslate` SwiftUI/AppKit executable. SwiftUI owns normal UI, settings, and history; narrow AppKit services own global hotkeys, Accessibility text capture, pasteboard fallback, and floating `NSPanel` presentation.
 
-**Tech Stack:** Swift 6.3, SwiftPM, SwiftUI, AppKit, Carbon hotkeys, Accessibility APIs, Security Keychain, XCTest, macOS 13+.
+**Tech Stack:** Swift 6.3, SwiftPM, SwiftUI, AppKit, Carbon hotkeys, Accessibility APIs, Security Keychain, project-local Swift test runner, macOS 13+.
 
 ---
 
@@ -36,10 +36,12 @@
 - Create `Sources/QuickTranslate/Views/AboutView.swift`: app and permission summary.
 - Create `Sources/QuickTranslate/Views/FloatingPanelView.swift`: result and error panel content.
 - Create `Sources/QuickTranslate/Services/FloatingPanelController.swift`: top-right `NSPanel` lifecycle.
-- Create `Tests/QuickTranslateCoreTests/*.swift`: unit tests for models, parser, stores, and request building.
+- Create `Tests/QuickTranslateCoreTestRunner/main.swift`: project-local unit test runner for models, parser, stores, and request building.
 - Create `script/build_and_run.sh`: one build/run/debug/log/telemetry/verify entrypoint.
 - Create `.codex/environments/environment.toml`: Codex Run action.
 - Create `.gitignore`: ignore `.build/`, `dist/`, `.worktrees/`, and editor noise.
+
+Execution note: this environment has Command Line Tools without `XCTest` or Swift `Testing`, so implementation uses the `QuickTranslateCoreTestRunner` executable instead of `swift test`. Commands that mention `swift test --filter <name>` are executed as `swift run QuickTranslateCoreTestRunner <name>`.
 
 ## Task 1: Bootstrap SwiftPM Package And Local Run Loop
 
