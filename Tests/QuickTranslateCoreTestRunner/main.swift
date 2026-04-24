@@ -111,6 +111,15 @@ let tests: [TestCase] = [
 
     try store.delete(record.id)
     try expect(store.records.isEmpty, "history should be empty after delete")
+  },
+  TestCase(name: "HotKeyTests/testOptionDHasDisplayAndCarbonMetadata") {
+    let hotKey = HotKey.optionD
+
+    try expectEqual(hotKey.displayString, "Option+D", "hotkey display")
+    try expectEqual(hotKey.keyCode, 2, "D key code")
+    try expect(hotKey.modifiers.contains(.option), "hotkey should contain option")
+    try expectEqual(hotKey.carbonModifiers, 2048, "Carbon option modifier")
+    try expectEqual(try HotKey.parse("Option+D"), .optionD, "parse Option+D")
   }
 ]
 

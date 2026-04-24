@@ -1,4 +1,7 @@
 import Foundation
+#if os(macOS)
+import Carbon
+#endif
 
 public struct HotKey: Codable, Equatable, Sendable {
   public struct Modifiers: OptionSet, Codable, Equatable, Sendable {
@@ -30,6 +33,18 @@ public struct HotKey: Codable, Equatable, Sendable {
     }
     parts.append(key.uppercased())
     return parts.joined(separator: "+")
+  }
+
+  public var carbonModifiers: UInt32 {
+    var value: UInt32 = 0
+    if modifiers.contains(.option) {
+      #if os(macOS)
+      value |= UInt32(optionKey)
+      #else
+      value |= 2048
+      #endif
+    }
+    return value
   }
 
   public static func parse(_ value: String) throws -> HotKey {
