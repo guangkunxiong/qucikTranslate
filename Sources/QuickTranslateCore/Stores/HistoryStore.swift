@@ -28,6 +28,11 @@ public final class HistoryStore: ObservableObject {
     try save()
   }
 
+  public func clear() throws {
+    records.removeAll()
+    try save()
+  }
+
   public func search(_ query: String, hidingSystemPrompts systemPrompts: [String] = []) -> [HistoryRecord] {
     let visibleRecords = recordsExcludingSystemPrompts(systemPrompts)
     let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)

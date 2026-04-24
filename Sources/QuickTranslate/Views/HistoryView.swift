@@ -4,6 +4,7 @@ import SwiftUI
 struct HistoryView: View {
   @EnvironmentObject private var appModel: AppModel
   @State private var searchText = ""
+  @State private var isConfirmingClear = false
 
   private var records: [HistoryRecord] {
     _ = appModel.historyRevision
@@ -29,6 +30,17 @@ struct HistoryView: View {
       .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
       .padding([.horizontal, .top])
 
+      HStack {
+        Spacer()
+        Button(role: .destructive) {
+          isConfirmingClear = true
+        } label: {
+          Label("清空历史", systemImage: "trash")
+        }
+        .disabled(appModel.historyStore.records.isEmpty)
+      }
+      .padding([.horizontal, .top], 12)
+
       if records.isEmpty {
         EmptyHistoryView()
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -42,6 +54,17 @@ struct HistoryView: View {
       }
     }
     .navigationTitle("历史")
+    .confirmationDialog(
+      "清空所有历史记录？",
+      isPresented: $isConfirmingClear
+    ) {
+      Button("清空历史记录", role: .destructive) {
+        appModel.clearHistoryRecords()
+      }
+      Button("取消", role: .cancel) {}
+    } message: {
+      Text("此操作会删除所有翻译历史，无法撤销。")
+    }
   }
 }
 

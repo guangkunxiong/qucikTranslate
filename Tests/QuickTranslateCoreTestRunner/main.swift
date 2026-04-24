@@ -223,6 +223,37 @@ let tests: [TestCase] = [
     try store.delete(record.id)
     try expect(store.records.isEmpty, "history should be empty after delete")
   },
+  TestCase(name: "HistoryStoreTests/testClearsAndPersistsEmptyHistory") {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    let store = HistoryStore(directoryURL: directory)
+
+    _ = try store.add(
+      TranslationResult(
+        originalText: "hello",
+        translatedText: "你好",
+        detectedLanguage: "非中文",
+        targetLanguage: "简体中文",
+        model: "gpt-test",
+        timestamp: Date(timeIntervalSince1970: 1)
+      )
+    )
+    _ = try store.add(
+      TranslationResult(
+        originalText: "world",
+        translatedText: "世界",
+        detectedLanguage: "非中文",
+        targetLanguage: "简体中文",
+        model: "gpt-test",
+        timestamp: Date(timeIntervalSince1970: 2)
+      )
+    )
+
+    try store.clear()
+
+    try expect(store.records.isEmpty, "history should be empty after clear")
+    let reloaded = HistoryStore(directoryURL: directory)
+    try expect(reloaded.records.isEmpty, "cleared history should persist")
+  },
   TestCase(name: "HistoryStoreTests/testSearchCanHideSystemPromptRecords") {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     let store = HistoryStore(directoryURL: directory)

@@ -122,6 +122,15 @@ final class AppModel: ObservableObject {
     }
   }
 
+  func clearHistoryRecords() {
+    do {
+      try historyStore.clear()
+      historyRevision += 1
+    } catch {
+      showError(AppError.requestFailed(error.localizedDescription))
+    }
+  }
+
   func copyTranslation(_ text: String) {
     NSPasteboard.general.clearContents()
     NSPasteboard.general.setString(text, forType: .string)
