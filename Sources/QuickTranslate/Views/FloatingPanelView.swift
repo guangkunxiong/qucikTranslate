@@ -23,9 +23,27 @@ enum FloatingPanelState: Identifiable {
 
 struct FloatingPanelView: View {
   let state: FloatingPanelState
+  let onPinChanged: (Bool) -> Void
   let onStartTranslation: (String) -> Void
   let onCopy: (String) -> Void
   let onClose: () -> Void
+  @State private var pinned: Bool
+
+  init(
+    state: FloatingPanelState,
+    isPinned: Bool,
+    onPinChanged: @escaping (Bool) -> Void,
+    onStartTranslation: @escaping (String) -> Void,
+    onCopy: @escaping (String) -> Void,
+    onClose: @escaping () -> Void
+  ) {
+    self.state = state
+    self.onPinChanged = onPinChanged
+    self.onStartTranslation = onStartTranslation
+    self.onCopy = onCopy
+    self.onClose = onClose
+    _pinned = State(initialValue: isPinned)
+  }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
@@ -63,6 +81,15 @@ struct FloatingPanelView: View {
 
   private var header: some View {
     HStack {
+      Button {
+        pinned.toggle()
+        onPinChanged(pinned)
+      } label: {
+        Image(systemName: pinned ? "pin.fill" : "pin")
+      }
+      .buttonStyle(.borderless)
+      .help(pinned ? "取消固定" : "固定弹窗，点击其他区域不收起")
+
       Label("快捷翻译", systemImage: "character.book.closed")
         .font(.headline)
       Spacer()

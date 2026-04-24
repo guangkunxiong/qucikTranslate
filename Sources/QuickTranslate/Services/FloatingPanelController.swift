@@ -1,9 +1,13 @@
 import AppKit
+import QuickTranslateCore
 import SwiftUI
 
 @MainActor
 final class FloatingPanelController {
   private var panel: NSPanel?
+  private var pinState = FloatingPanelPinState()
+  private var localMouseMonitor: Any?
+  private var globalMouseMonitor: Any?
 
   func show(
     state: FloatingPanelState,
@@ -12,6 +16,10 @@ final class FloatingPanelController {
   ) {
     let rootView = FloatingPanelView(
       state: state,
+      isPinned: pinState.isPinned,
+      onPinChanged: { [weak self] isPinned in
+        self?.setPinned(isPinned)
+      },
       onStartTranslation: onStartTranslation,
       onCopy: onCopy,
       onClose: { [weak self] in
@@ -31,11 +39,14 @@ final class FloatingPanelController {
       panel.setContentSize(preferredContentSize(for: panel, fittingSize: size))
       position(panel)
     }
+    installOutsideClickMonitors()
     panel.makeKeyAndOrderFront(nil)
   }
 
   func close() {
+    pinState = FloatingPanelPinState()
     panel?.orderOut(nil)
+    removeOutsideClickMonitors()
   }
 
   private func makePanel() -> NSPanel {
@@ -59,6 +70,75 @@ final class FloatingPanelController {
     panel.standardWindowButton(.miniaturizeButton)?.isHidden = true
     panel.standardWindowButton(.zoomButton)?.isHidden = true
     return panel
+  }
+
+  private func setPinned(_ isPinned: Bool) {
+    if pinState.isPinned != isPinned {
+      pinState.toggle()
+    }
+  }
+
+  private func installOutsideClickMonitors() {
+    guard localMouseMonitor == nil, globalMouseMonitor == nil else {
+      return
+    }
+
+    localMouseMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+      guard let self else {
+        return event
+      }
+
+      MainActor.assumeIsolated {
+        self.handleLocalMouseDown(event)
+      }
+      return event
+    }
+
+    globalMouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+      Task { @MainActor in
+        self?.handleGlobalMouseDown()
+      }
+    }
+  }
+
+  private func removeOutsideClickMonitors() {
+    if let localMouseMonitor {
+      NSEvent.removeMonitor(localMouseMonitor)
+      self.localMouseMonitor = nil
+    }
+
+    if let globalMouseMonitor {
+      NSEvent.removeMonitor(globalMouseMonitor)
+      self.globalMouseMonitor = nil
+    }
+  }
+
+  private func handleLocalMouseDown(_ event: NSEvent) {
+    guard shouldCloseForOutsideClick else {
+      return
+    }
+
+    if event.window !== panel {
+      close()
+    }
+  }
+
+  private func handleGlobalMouseDown() {
+    guard shouldCloseForOutsideClick, let panel else {
+      return
+    }
+
+    if !panel.frame.contains(NSEvent.mouseLocation) {
+      close()
+    }
+  }
+
+  private var shouldCloseForOutsideClick: Bool {
+    guard let panel, panel.isVisible else {
+      return false
+    }
+
+    return !pinState.isPinned
   }
 
   private func preferredContentSize(for panel: NSPanel, fittingSize: NSSize) -> NSSize {

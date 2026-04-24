@@ -68,6 +68,15 @@ let tests: [TestCase] = [
     try expectEqual(cache.value, "new-secret", "saved value")
     try expect(!cache.shouldPersist("new-secret"), "unchanged saved value should not persist again")
   },
+  TestCase(name: "FloatingPanelPinStateTests/testDefaultsUnpinnedAndCanToggle") {
+    var state = FloatingPanelPinState()
+
+    try expect(!state.isPinned, "panel should default to unpinned")
+    state.toggle()
+    try expect(state.isPinned, "panel should be pinned after first toggle")
+    state.toggle()
+    try expect(!state.isPinned, "panel should be unpinned after second toggle")
+  },
   TestCase(name: "TranslationResponseParserTests/testParsesStructuredJSONTranslation") {
     let content = """
     {"detected_language":"English","target_language":"Simplified Chinese","translation":"你好"}
