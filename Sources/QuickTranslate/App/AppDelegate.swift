@@ -1,9 +1,12 @@
 import AppKit
 
+@MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
+  static weak var appModel: AppModel?
+
   func applicationDidFinishLaunching(_ notification: Notification) {
-    NSApp.setActivationPolicy(.regular)
-    NSApp.activate(ignoringOtherApps: true)
+    NSApp.setActivationPolicy(.accessory)
     NSApp.mainMenu?.items.first?.title = "快捷翻译"
+    Self.appModel?.start()
   }
 }

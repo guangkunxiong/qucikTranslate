@@ -18,6 +18,7 @@ final class AppModel: ObservableObject {
   private let selectedTextCaptureService: SelectedTextCaptureService
   private let hotKeyService: HotKeyService
   private let floatingPanelController: FloatingPanelController
+  private let mainWindowController: MainWindowController
   private var started = false
   private var pendingDraft: TranslationDraft?
   private var apiKeyCache = CachedSecretValue()
@@ -34,7 +35,8 @@ final class AppModel: ObservableObject {
     openAIClient: OpenAICompatibleClient = OpenAICompatibleClient(),
     selectedTextCaptureService: SelectedTextCaptureService = SelectedTextCaptureService(),
     hotKeyService: HotKeyService = HotKeyService(),
-    floatingPanelController: FloatingPanelController = FloatingPanelController()
+    floatingPanelController: FloatingPanelController = FloatingPanelController(),
+    mainWindowController: MainWindowController = MainWindowController()
   ) {
     self.settingsStore = settingsStore
     self.historyStore = historyStore
@@ -43,6 +45,7 @@ final class AppModel: ObservableObject {
     self.selectedTextCaptureService = selectedTextCaptureService
     self.hotKeyService = hotKeyService
     self.floatingPanelController = floatingPanelController
+    self.mainWindowController = mainWindowController
   }
 
   func start() {
@@ -111,6 +114,10 @@ final class AppModel: ObservableObject {
     Task {
       await streamTranslate(draft: TranslationDraft(sourceText: record.originalText))
     }
+  }
+
+  func showMainWindow() {
+    mainWindowController.show(appModel: self)
   }
 
   func deleteHistoryRecord(_ id: UUID) {

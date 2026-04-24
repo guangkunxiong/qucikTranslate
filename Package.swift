@@ -20,7 +20,8 @@ let package = Package(
     .executableTarget(
       name: "QuickTranslate",
       dependencies: ["QuickTranslateCore"],
-      path: "Sources/QuickTranslate"
+      path: "Sources/QuickTranslate",
+      resources: [.process("Resources")]
     ),
     .executableTarget(
       name: "QuickTranslateCoreTestRunner",
