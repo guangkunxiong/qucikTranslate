@@ -113,15 +113,16 @@ final class AppModel: ObservableObject {
   }
 
   private func translateCurrentSelection() async {
-    guard PermissionService.isAccessibilityTrusted else {
-      showError(AppError.missingAccessibilityPermission)
-      return
-    }
-
     let text = await selectedTextCaptureService.captureSelectedText()
       .trimmingCharacters(in: .whitespacesAndNewlines)
 
     guard !text.isEmpty else {
+      if !PermissionService.isAccessibilityTrusted {
+        _ = PermissionService.promptForAccessibilityPermission()
+        showError(AppError.missingAccessibilityPermission)
+        return
+      }
+
       showError(AppError.noSelectedText)
       return
     }
