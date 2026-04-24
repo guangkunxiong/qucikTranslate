@@ -19,6 +19,7 @@ final class AppModel: ObservableObject {
   private let hotKeyService: HotKeyService
   private let floatingPanelController: FloatingPanelController
   private var started = false
+  private var pendingDraft: TranslationDraft?
 
   private let logger = Logger(
     subsystem: "com.only77.QuickTranslate",
@@ -94,7 +95,7 @@ final class AppModel: ObservableObject {
 
   func translate(record: HistoryRecord) {
     Task {
-      await translate(text: record.originalText)
+      await streamTranslate(draft: TranslationDraft(sourceText: record.originalText))
     }
   }
 
@@ -127,10 +128,43 @@ final class AppModel: ObservableObject {
       return
     }
 
-    await translate(text: text)
+    showDraft(text)
   }
 
-  private func translate(text: String) async {
+  private func showDraft(_ text: String) {
+    let draft = TranslationDraft(sourceText: text)
+    pendingDraft = draft
+    floatingPanelController.show(
+      state: .draft(draft),
+      onStartTranslation: { [weak self] in
+        self?.startPendingTranslation()
+      },
+      onCopy: { [weak self] value in
+        self?.copyTranslation(value)
+      }
+    )
+  }
+
+  private func startPendingTranslation() {
+    guard !isTranslating else {
+      return
+    }
+
+    Task {
+      await beginPendingTranslation()
+    }
+  }
+
+  private func beginPendingTranslation() async {
+    guard let draft = pendingDraft else {
+      return
+    }
+
+    pendingDraft = nil
+    await streamTranslate(draft: draft)
+  }
+
+  private func streamTranslate(draft: TranslationDraft) async {
     let settings = settingsStore.settings
     let trimmedAPIKey = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
     let trimmedModel = settings.model.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -149,11 +183,40 @@ final class AppModel: ObservableObject {
     defer { isTranslating = false }
 
     do {
-      logger.info("Starting translation request")
-      let result = try await openAIClient.translate(
-        sourceText: text,
+      logger.info("Starting streaming translation request")
+      var translatedText = ""
+      floatingPanelController.show(
+        state: .streaming(draft, translatedText: translatedText),
+        onCopy: { [weak self] value in
+          self?.copyTranslation(value)
+        }
+      )
+
+      for try await delta in openAIClient.streamTranslationDeltas(
+        draft: draft,
         settings: settings,
         apiKey: trimmedAPIKey
+      ) {
+        translatedText += delta
+        floatingPanelController.show(
+          state: .streaming(draft, translatedText: translatedText),
+          onCopy: { [weak self] value in
+            self?.copyTranslation(value)
+          }
+        )
+      }
+
+      let trimmedTranslation = translatedText.trimmingCharacters(in: .whitespacesAndNewlines)
+      guard !trimmedTranslation.isEmpty else {
+        throw OpenAICompatibleClientError.missingAssistantContent
+      }
+
+      let result = TranslationResult(
+        originalText: draft.sourceText,
+        translatedText: trimmedTranslation,
+        detectedLanguage: draft.detectedLanguage,
+        targetLanguage: draft.targetLanguage,
+        model: trimmedModel
       )
       _ = try historyStore.add(result)
       historyRevision += 1
@@ -163,7 +226,7 @@ final class AppModel: ObservableObject {
           self?.copyTranslation(value)
         }
       )
-      logger.info("Translation completed")
+      logger.info("Streaming translation completed")
     } catch {
       showError(AppError.requestFailed(error.localizedDescription))
     }

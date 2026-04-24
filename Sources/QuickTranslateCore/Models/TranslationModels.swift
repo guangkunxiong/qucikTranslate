@@ -28,10 +28,39 @@ public struct TranslationResult: Codable, Equatable, Identifiable, Sendable {
   }
 }
 
+public struct TranslationDraft: Equatable, Identifiable, Sendable {
+  public var id: UUID
+  public var sourceText: String
+  public var detectedLanguage: String
+  public var targetLanguage: String
+
+  public init(
+    id: UUID = UUID(),
+    sourceText: String,
+    detectedLanguage: String? = nil,
+    targetLanguage: String? = nil
+  ) {
+    let containsChinese = sourceText.unicodeScalars.contains { scalar in
+      switch scalar.value {
+      case 0x4E00...0x9FFF, 0x3400...0x4DBF, 0x20000...0x2A6DF, 0x2A700...0x2B73F:
+        true
+      default:
+        false
+      }
+    }
+
+    self.id = id
+    self.sourceText = sourceText
+    self.detectedLanguage = detectedLanguage ?? (containsChinese ? "中文" : "非中文")
+    self.targetLanguage = targetLanguage ?? (containsChinese ? "英文" : "简体中文")
+  }
+}
+
 struct ChatCompletionRequest: Encodable {
   let model: String
   let messages: [ChatMessage]
   let temperature: Double
+  let stream: Bool?
 }
 
 struct ChatMessage: Codable {

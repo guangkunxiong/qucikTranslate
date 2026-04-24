@@ -7,10 +7,12 @@ final class FloatingPanelController {
 
   func show(
     state: FloatingPanelState,
+    onStartTranslation: @escaping () -> Void = {},
     onCopy: @escaping (String) -> Void
   ) {
     let rootView = FloatingPanelView(
       state: state,
+      onStartTranslation: onStartTranslation,
       onCopy: onCopy,
       onClose: { [weak self] in
         self?.close()
@@ -24,9 +26,10 @@ final class FloatingPanelController {
 
     hostingController.view.layoutSubtreeIfNeeded()
     let size = hostingController.view.fittingSize
-    panel.setContentSize(NSSize(width: max(size.width, 380), height: max(size.height, 120)))
+    panel.setContentSize(NSSize(width: max(size.width, 460), height: max(size.height, 240)))
     position(panel)
-    panel.orderFrontRegardless()
+    NSApp.activate(ignoringOtherApps: true)
+    panel.makeKeyAndOrderFront(nil)
   }
 
   func close() {
@@ -34,9 +37,9 @@ final class FloatingPanelController {
   }
 
   private func makePanel() -> NSPanel {
-    let panel = NSPanel(
-      contentRect: NSRect(x: 0, y: 0, width: 380, height: 180),
-      styleMask: [.nonactivatingPanel, .fullSizeContentView],
+    let panel = KeyableFloatingPanel(
+      contentRect: NSRect(x: 0, y: 0, width: 460, height: 260),
+      styleMask: [.titled, .utilityWindow, .fullSizeContentView],
       backing: .buffered,
       defer: false
     )
@@ -44,9 +47,14 @@ final class FloatingPanelController {
     panel.collectionBehavior = [.canJoinAllSpaces, .transient, .ignoresCycle]
     panel.isReleasedWhenClosed = false
     panel.isMovableByWindowBackground = true
+    panel.titleVisibility = .hidden
+    panel.titlebarAppearsTransparent = true
     panel.backgroundColor = .clear
     panel.isOpaque = false
     panel.hasShadow = true
+    panel.standardWindowButton(.closeButton)?.isHidden = true
+    panel.standardWindowButton(.miniaturizeButton)?.isHidden = true
+    panel.standardWindowButton(.zoomButton)?.isHidden = true
     return panel
   }
 
@@ -65,5 +73,11 @@ final class FloatingPanelController {
   private func screenForPanel() -> NSScreen {
     let mouse = NSEvent.mouseLocation
     return NSScreen.screens.first { $0.frame.contains(mouse) } ?? NSScreen.main ?? NSScreen.screens[0]
+  }
+}
+
+private final class KeyableFloatingPanel: NSPanel {
+  override var canBecomeKey: Bool {
+    true
   }
 }

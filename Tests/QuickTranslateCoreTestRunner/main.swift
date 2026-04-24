@@ -84,6 +84,44 @@ let tests: [TestCase] = [
     try expectEqual(json?["model"] as? String, "gpt-test", "request model")
     try expect(json?["messages"] != nil, "request messages should exist")
   },
+  TestCase(name: "OpenAICompatibleClientTests/testBuildsStreamingRequest") {
+    let settings = AppSettings.defaults
+    let request = try OpenAICompatibleClient.makeRequest(
+      baseURL: settings.baseURL,
+      apiKey: "test-key",
+      model: "gpt-test",
+      systemPrompt: "只输出译文",
+      sourceText: "hello",
+      stream: true
+    )
+
+    guard let body = request.httpBody else {
+      throw TestFailure(message: "streaming request body should exist")
+    }
+    let json = try JSONSerialization.jsonObject(with: body) as? [String: Any]
+    try expectEqual(json?["stream"] as? Bool, true, "stream flag")
+  },
+  TestCase(name: "TranslationDraftTests/testInfersChineseToEnglishDirection") {
+    let draft = TranslationDraft(sourceText: "你好，世界")
+
+    try expectEqual(draft.detectedLanguage, "中文", "detected language")
+    try expectEqual(draft.targetLanguage, "英文", "target language")
+  },
+  TestCase(name: "TranslationDraftTests/testInfersNonChineseToSimplifiedChineseDirection") {
+    let draft = TranslationDraft(sourceText: "hello world")
+
+    try expectEqual(draft.detectedLanguage, "非中文", "detected language")
+    try expectEqual(draft.targetLanguage, "简体中文", "target language")
+  },
+  TestCase(name: "StreamingChatCompletionParserTests/testParsesContentDelta") {
+    let line = #"data: {"choices":[{"delta":{"content":"你"}}]}"#
+
+    try expectEqual(StreamingChatCompletionParser.delta(fromSSELine: line), "你", "streaming delta")
+  },
+  TestCase(name: "StreamingChatCompletionParserTests/testIgnoresDoneAndNonDataLines") {
+    try expectEqual(StreamingChatCompletionParser.delta(fromSSELine: "data: [DONE]"), nil, "done line")
+    try expectEqual(StreamingChatCompletionParser.delta(fromSSELine: ": keep-alive"), nil, "comment line")
+  },
   TestCase(name: "SettingsStoreTests/testPersistsSettingsInUserDefaultsSuite") {
     let defaults = UserDefaults(suiteName: "SettingsStoreTests-\(UUID().uuidString)")!
     let store = SettingsStore(userDefaults: defaults)
