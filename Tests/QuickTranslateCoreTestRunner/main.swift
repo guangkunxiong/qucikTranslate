@@ -68,6 +68,24 @@ let tests: [TestCase] = [
     try expectEqual(cache.value, "new-secret", "saved value")
     try expect(!cache.shouldPersist("new-secret"), "unchanged saved value should not persist again")
   },
+  TestCase(name: "APIKeyStoreTests/testPersistsAndClearsAPIKeyInUserDefaultsSuite") {
+    let suiteName = "APIKeyStoreTests-\(UUID().uuidString)"
+    let defaults = UserDefaults(suiteName: suiteName)!
+    defer {
+      defaults.removePersistentDomain(forName: suiteName)
+    }
+    let store = APIKeyStore(userDefaults: defaults)
+
+    try expectEqual(store.loadAPIKey(), "", "missing API key should load as empty")
+    store.saveAPIKey("sk-test")
+    try expectEqual(store.loadAPIKey(), "sk-test", "saved API key")
+
+    let reloaded = APIKeyStore(userDefaults: defaults)
+    try expectEqual(reloaded.loadAPIKey(), "sk-test", "reloaded API key")
+
+    store.deleteAPIKey()
+    try expectEqual(store.loadAPIKey(), "", "deleted API key")
+  },
   TestCase(name: "FloatingPanelPinStateTests/testDefaultsUnpinnedAndCanToggle") {
     var state = FloatingPanelPinState()
 

@@ -113,7 +113,7 @@ struct FloatingPanelView: View {
       }
 
       textBlock(draft.sourceText)
-        .frame(minHeight: 56, alignment: .topLeading)
+        .frame(minHeight: 128, alignment: .topLeading)
     }
     .padding(12)
     .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))

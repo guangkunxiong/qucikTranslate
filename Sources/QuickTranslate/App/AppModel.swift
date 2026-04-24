@@ -7,7 +7,7 @@ import QuickTranslateCore
 final class AppModel: ObservableObject {
   let settingsStore: SettingsStore
   let historyStore: HistoryStore
-  let keychainStore: KeychainStore
+  let apiKeyStore: APIKeyStore
 
   @Published private(set) var isTranslating = false
   @Published private(set) var historyRevision = 0
@@ -30,7 +30,7 @@ final class AppModel: ObservableObject {
   init(
     settingsStore: SettingsStore = SettingsStore(),
     historyStore: HistoryStore = HistoryStore(),
-    keychainStore: KeychainStore = KeychainStore(),
+    apiKeyStore: APIKeyStore = APIKeyStore(),
     openAIClient: OpenAICompatibleClient = OpenAICompatibleClient(),
     selectedTextCaptureService: SelectedTextCaptureService = SelectedTextCaptureService(),
     hotKeyService: HotKeyService = HotKeyService(),
@@ -38,7 +38,7 @@ final class AppModel: ObservableObject {
   ) {
     self.settingsStore = settingsStore
     self.historyStore = historyStore
-    self.keychainStore = keychainStore
+    self.apiKeyStore = apiKeyStore
     self.openAIClient = openAIClient
     self.selectedTextCaptureService = selectedTextCaptureService
     self.hotKeyService = hotKeyService
@@ -81,17 +81,13 @@ final class AppModel: ObservableObject {
       return
     }
 
-    do {
-      if normalizedValue.isEmpty {
-        try keychainStore.deleteAPIKey()
-      } else {
-        try keychainStore.saveAPIKey(normalizedValue)
-      }
-      apiKeyCache.markSaved(normalizedValue)
-      apiKey = normalizedValue
-    } catch {
-      showError(AppError.requestFailed(error.localizedDescription))
+    if normalizedValue.isEmpty {
+      apiKeyStore.deleteAPIKey()
+    } else {
+      apiKeyStore.saveAPIKey(normalizedValue)
     }
+    apiKeyCache.markSaved(normalizedValue)
+    apiKey = normalizedValue
   }
 
   func loadAPIKeyIfNeeded() {
@@ -100,7 +96,7 @@ final class AppModel: ObservableObject {
       return
     }
 
-    let loadedValue = (try? keychainStore.loadAPIKey()) ?? ""
+    let loadedValue = apiKeyStore.loadAPIKey()
     apiKeyCache.markLoaded(loadedValue)
     apiKey = loadedValue
   }

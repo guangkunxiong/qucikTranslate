@@ -30,6 +30,7 @@ final class FloatingPanelController {
     let hostingController = NSHostingController(rootView: rootView)
     let panel = panel ?? makePanel()
     let shouldResetSize = !panel.isVisible
+    let existingFrame = panel.frame
     panel.contentViewController = hostingController
     self.panel = panel
 
@@ -38,6 +39,8 @@ final class FloatingPanelController {
       let size = hostingController.view.fittingSize
       panel.setContentSize(preferredContentSize(for: panel, fittingSize: size))
       position(panel)
+    } else {
+      panel.setFrame(existingFrame, display: true)
     }
     installOutsideClickMonitors()
     panel.makeKeyAndOrderFront(nil)
