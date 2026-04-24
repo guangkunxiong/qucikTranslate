@@ -22,7 +22,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
   }
 
   public static let defaultSystemPrompt = """
-  You are a precise translation engine. Detect the source language and translate according to this rule: Chinese source text translates to English; non-Chinese source text translates to Simplified Chinese. Return compact JSON with keys detected_language, target_language, and translation. Do not include markdown.
+  你是一个精准的翻译引擎。请先识别原文语言，然后按以下规则翻译：中文原文翻译成英文；非中文原文翻译成简体中文。请只返回紧凑 JSON，包含 detected_language、target_language、translation 三个字段；detected_language 和 target_language 使用简体中文语言名称，不要返回 Markdown。
   """
 
   public static let defaults = AppSettings(

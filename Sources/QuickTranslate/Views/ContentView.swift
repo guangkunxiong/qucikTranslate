@@ -10,9 +10,9 @@ private enum SidebarSelection: String, CaseIterable, Identifiable {
 
   var title: String {
     switch self {
-    case .history: "History"
-    case .settings: "Settings"
-    case .about: "About"
+    case .history: "历史"
+    case .settings: "设置"
+    case .about: "关于"
     }
   }
 
@@ -32,7 +32,7 @@ struct ContentView: View {
   var body: some View {
     HStack(spacing: 0) {
       VStack(alignment: .leading, spacing: 8) {
-        Text("Quick Translate")
+        Text("快捷翻译")
           .font(.headline)
           .padding(.horizontal, 12)
           .padding(.top, 14)

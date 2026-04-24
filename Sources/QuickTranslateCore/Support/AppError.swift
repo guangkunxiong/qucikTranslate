@@ -11,15 +11,15 @@ public enum AppError: Error, LocalizedError, Equatable {
   public var errorDescription: String? {
     switch self {
     case .noSelectedText:
-      "No selected text was detected."
+      "未检测到选中文本。"
     case .missingAPIKey:
-      "Configure an API key before translating."
+      "请先在设置中配置 API Key。"
     case .missingModel:
-      "Configure a model before translating."
+      "请先在设置中配置模型。"
     case .missingAccessibilityPermission:
-      "Enable Accessibility permission for Quick Translate."
+      "请在系统设置中为快捷翻译开启辅助功能权限。"
     case let .hotKeyRegistrationFailed(message):
-      "Global shortcut registration failed: \(message)"
+      "全局快捷键注册失败：\(message)"
     case let .requestFailed(message):
       message
     }

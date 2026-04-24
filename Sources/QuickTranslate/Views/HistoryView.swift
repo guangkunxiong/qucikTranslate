@@ -15,7 +15,7 @@ struct HistoryView: View {
       HStack {
         Image(systemName: "magnifyingglass")
           .foregroundStyle(.secondary)
-        TextField("Search history", text: $searchText)
+        TextField("搜索历史", text: $searchText)
           .textFieldStyle(.plain)
       }
       .padding(10)
@@ -34,7 +34,7 @@ struct HistoryView: View {
         .listStyle(.inset)
       }
     }
-    .navigationTitle("History")
+    .navigationTitle("历史")
   }
 }
 
@@ -44,9 +44,9 @@ private struct EmptyHistoryView: View {
       Image(systemName: "clock.arrow.circlepath")
         .font(.largeTitle)
         .foregroundStyle(.secondary)
-      Text("No History")
+      Text("暂无历史")
         .font(.headline)
-      Text("Successful translations will appear here.")
+      Text("成功翻译后会显示在这里。")
         .foregroundStyle(.secondary)
     }
   }
@@ -82,21 +82,21 @@ private struct HistoryRow: View {
         } label: {
           Image(systemName: "doc.on.doc")
         }
-        .help("Copy translation")
+        .help("复制译文")
 
         Button {
           appModel.translate(record: record)
         } label: {
           Image(systemName: "arrow.clockwise")
         }
-        .help("Translate again")
+        .help("重新翻译")
 
         Button(role: .destructive) {
           appModel.deleteHistoryRecord(record.id)
         } label: {
           Image(systemName: "trash")
         }
-        .help("Delete")
+        .help("删除")
       }
       .font(.caption)
       .foregroundStyle(.secondary)

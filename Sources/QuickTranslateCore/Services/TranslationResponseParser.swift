@@ -33,8 +33,8 @@ public enum TranslationResponseParser {
       return TranslationResult(
         originalText: sourceText,
         translatedText: translated,
-        detectedLanguage: structured.detectedLanguage ?? "Unknown",
-        targetLanguage: structured.targetLanguage ?? "Auto",
+        detectedLanguage: structured.detectedLanguage ?? "未知",
+        targetLanguage: structured.targetLanguage ?? "自动",
         model: model,
         timestamp: timestamp
       )
@@ -43,8 +43,8 @@ public enum TranslationResponseParser {
     return TranslationResult(
       originalText: sourceText,
       translatedText: trimmed,
-      detectedLanguage: "Unknown",
-      targetLanguage: "Auto",
+      detectedLanguage: "未知",
+      targetLanguage: "自动",
       model: model,
       timestamp: timestamp
     )

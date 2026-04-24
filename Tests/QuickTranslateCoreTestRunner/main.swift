@@ -34,7 +34,13 @@ let tests: [TestCase] = [
     try expectEqual(settings.model, "gpt-4o-mini", "default model")
     try expectEqual(settings.hotKey.displayString, "Option+D", "default hotkey")
     try expect(settings.automaticallyBidirectional, "automatic bidirectional translation should be enabled")
-    try expect(settings.systemPrompt.contains("Chinese source text"), "default prompt should describe Chinese source behavior")
+    try expect(settings.systemPrompt.contains("中文原文翻译成英文"), "default prompt should describe Chinese source behavior in Simplified Chinese")
+  },
+  TestCase(name: "AppErrorTests/testUserFacingErrorsAreSimplifiedChinese") {
+    try expectEqual(AppError.noSelectedText.errorDescription, "未检测到选中文本。", "no selected text error")
+    try expectEqual(AppError.missingAPIKey.errorDescription, "请先在设置中配置 API Key。", "missing API key error")
+    try expectEqual(AppError.missingModel.errorDescription, "请先在设置中配置模型。", "missing model error")
+    try expectEqual(AppError.missingAccessibilityPermission.errorDescription, "请在系统设置中为快捷翻译开启辅助功能权限。", "missing permission error")
   },
   TestCase(name: "TranslationResponseParserTests/testParsesStructuredJSONTranslation") {
     let content = """
@@ -53,8 +59,8 @@ let tests: [TestCase] = [
     let result = TranslationResponseParser.parseAssistantContent("你好", sourceText: "hello", model: "gpt-test")
 
     try expectEqual(result.translatedText, "你好", "fallback translated text")
-    try expectEqual(result.detectedLanguage, "Unknown", "fallback detected language")
-    try expectEqual(result.targetLanguage, "Auto", "fallback target language")
+    try expectEqual(result.detectedLanguage, "未知", "fallback detected language")
+    try expectEqual(result.targetLanguage, "自动", "fallback target language")
   },
   TestCase(name: "OpenAICompatibleClientTests/testBuildsChatCompletionsRequest") {
     let settings = AppSettings.defaults

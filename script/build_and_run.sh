@@ -3,6 +3,7 @@ set -euo pipefail
 
 MODE="${1:-run}"
 APP_NAME="QuickTranslate"
+DISPLAY_NAME="快捷翻译"
 BUNDLE_ID="com.only77.QuickTranslate"
 MIN_SYSTEM_VERSION="13.0"
 
@@ -34,7 +35,9 @@ cat >"$INFO_PLIST" <<PLIST
   <key>CFBundleIdentifier</key>
   <string>$BUNDLE_ID</string>
   <key>CFBundleName</key>
-  <string>$APP_NAME</string>
+  <string>$DISPLAY_NAME</string>
+  <key>CFBundleDisplayName</key>
+  <string>$DISPLAY_NAME</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>LSMinimumSystemVersion</key>

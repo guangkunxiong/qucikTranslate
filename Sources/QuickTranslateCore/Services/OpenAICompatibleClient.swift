@@ -8,11 +8,11 @@ public enum OpenAICompatibleClientError: Error, LocalizedError {
   public var errorDescription: String? {
     switch self {
     case .invalidResponse:
-      "The translation service returned an invalid response."
+      "翻译服务返回了无效响应。"
     case .missingAssistantContent:
-      "The translation service did not return translated content."
+      "翻译服务没有返回译文内容。"
     case let .requestFailed(statusCode, body):
-      "The translation request failed with HTTP \(statusCode): \(body)"
+      "翻译请求失败，HTTP \(statusCode)：\(body)"
     }
   }
 }
@@ -41,7 +41,7 @@ public final class OpenAICompatibleClient: Sendable {
         ChatMessage(role: "system", content: systemPrompt),
         ChatMessage(
           role: "user",
-          content: "Translate this selected text. Return JSON only.\n\n\(sourceText)"
+          content: "翻译以下选中文本。只返回 JSON。\n\n\(sourceText)"
         )
       ],
       temperature: 0.2

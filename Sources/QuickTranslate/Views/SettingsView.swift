@@ -14,40 +14,40 @@ struct SettingsView: View {
 
   var body: some View {
     Form {
-      Section("Model") {
-        TextField("Base URL", text: $baseURLString)
+      Section("模型") {
+        TextField("接口地址 Base URL", text: $baseURLString)
           .textFieldStyle(.roundedBorder)
         SecureField("API Key", text: $apiKey)
           .textFieldStyle(.roundedBorder)
-        TextField("Model", text: $model)
+        TextField("模型", text: $model)
           .textFieldStyle(.roundedBorder)
       }
 
-      Section("Translation") {
-        Toggle("Automatic bidirectional translation", isOn: $automaticallyBidirectional)
+      Section("翻译") {
+        Toggle("自动双向翻译", isOn: $automaticallyBidirectional)
         TextEditor(text: $systemPrompt)
           .font(.body)
           .frame(minHeight: 130)
           .border(.quaternary)
       }
 
-      Section("Shortcut") {
-        TextField("Shortcut", text: $shortcut)
+      Section("快捷键") {
+        TextField("快捷键", text: $shortcut)
           .textFieldStyle(.roundedBorder)
-        Text("Default and supported format: Option+D")
+        Text("默认且当前支持的格式：Option+D")
           .font(.caption)
           .foregroundStyle(.secondary)
       }
 
-      Section("Permissions") {
+      Section("权限") {
         HStack {
           Label(
-            PermissionService.isAccessibilityTrusted ? "Accessibility enabled" : "Accessibility disabled",
+            PermissionService.isAccessibilityTrusted ? "辅助功能权限已开启" : "辅助功能权限未开启",
             systemImage: PermissionService.isAccessibilityTrusted ? "checkmark.circle" : "exclamationmark.triangle"
           )
           .foregroundStyle(PermissionService.isAccessibilityTrusted ? .green : .yellow)
           Spacer()
-          Button("Request Permission") {
+          Button("请求权限") {
             _ = PermissionService.promptForAccessibilityPermission()
           }
         }
@@ -55,7 +55,7 @@ struct SettingsView: View {
 
       Section {
         HStack {
-          Button("Save") {
+          Button("保存") {
             save()
           }
           .keyboardShortcut("s", modifiers: [.command])
@@ -71,7 +71,7 @@ struct SettingsView: View {
     .formStyle(.grouped)
     .padding()
     .frame(minWidth: 520, minHeight: 520)
-    .navigationTitle("Settings")
+    .navigationTitle("设置")
     .onAppear(perform: load)
   }
 
@@ -87,12 +87,12 @@ struct SettingsView: View {
 
   private func save() {
     guard let baseURL = URL(string: baseURLString.trimmingCharacters(in: .whitespacesAndNewlines)) else {
-      statusMessage = "Invalid Base URL"
+      statusMessage = "Base URL 无效"
       return
     }
 
     guard let hotKey = try? HotKey.parse(shortcut) else {
-      statusMessage = "Unsupported shortcut"
+      statusMessage = "不支持的快捷键"
       return
     }
 
@@ -106,6 +106,6 @@ struct SettingsView: View {
 
     appModel.saveSettings(settings)
     appModel.saveAPIKey(apiKey)
-    statusMessage = "Saved"
+    statusMessage = "已保存"
   }
 }

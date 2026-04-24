@@ -38,14 +38,14 @@ struct FloatingPanelView: View {
 
   private var header: some View {
     HStack {
-      Label("Quick Translate", systemImage: "character.book.closed")
+      Label("快捷翻译", systemImage: "character.book.closed")
         .font(.headline)
       Spacer()
       Button(action: onClose) {
         Image(systemName: "xmark")
       }
       .buttonStyle(.borderless)
-      .help("Close")
+      .help("关闭")
     }
   }
 
@@ -65,7 +65,7 @@ struct FloatingPanelView: View {
           .font(.caption)
           .foregroundStyle(.secondary)
         Spacer()
-        Text(saved ? "Saved" : "Not saved")
+        Text(saved ? "已保存" : "未保存")
           .font(.caption)
           .foregroundStyle(saved ? .green : .secondary)
       }
@@ -75,7 +75,7 @@ struct FloatingPanelView: View {
         Button {
           onCopy(result.translatedText)
         } label: {
-          Label("Copy", systemImage: "doc.on.doc")
+          Label("复制", systemImage: "doc.on.doc")
         }
       }
     }

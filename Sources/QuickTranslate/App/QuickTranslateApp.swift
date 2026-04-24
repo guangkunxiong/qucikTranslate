@@ -8,7 +8,7 @@ struct QuickTranslateApp: App {
   @StateObject private var appModel = AppModel()
 
   var body: some Scene {
-    WindowGroup("Quick Translate", id: "main") {
+    WindowGroup("快捷翻译", id: "main") {
       ContentView()
         .environmentObject(appModel)
         .onAppear {
@@ -21,16 +21,16 @@ struct QuickTranslateApp: App {
         .environmentObject(appModel)
     }
 
-    MenuBarExtra("Quick Translate", systemImage: "character.book.closed") {
-      Button("Translate Selection") {
+    MenuBarExtra("快捷翻译", systemImage: "character.book.closed") {
+      Button("翻译选中文本") {
         appModel.translateSelection()
       }
-      Button("Open Main Window") {
+      Button("打开主窗口") {
         openWindow(id: "main")
         NSApp.activate(ignoringOtherApps: true)
       }
       Divider()
-      Button("Quit") {
+      Button("退出") {
         NSApplication.shared.terminate(nil)
       }
     }
