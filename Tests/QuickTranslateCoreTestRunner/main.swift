@@ -156,6 +156,37 @@ let tests: [TestCase] = [
     try store.delete(record.id)
     try expect(store.records.isEmpty, "history should be empty after delete")
   },
+  TestCase(name: "HistoryStoreTests/testSearchCanHideSystemPromptRecords") {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    let store = HistoryStore(directoryURL: directory)
+
+    _ = try store.add(
+      TranslationResult(
+        originalText: AppSettings.defaultSystemPrompt,
+        translatedText: "Hidden prompt translation",
+        detectedLanguage: "中文",
+        targetLanguage: "英文",
+        model: "gpt-test",
+        timestamp: Date(timeIntervalSince1970: 1)
+      )
+    )
+    let visible = try store.add(
+      TranslationResult(
+        originalText: "hello",
+        translatedText: "你好",
+        detectedLanguage: "非中文",
+        targetLanguage: "简体中文",
+        model: "gpt-test",
+        timestamp: Date(timeIntervalSince1970: 2)
+      )
+    )
+
+    let allVisible = store.search("", hidingSystemPrompts: [AppSettings.defaultSystemPrompt])
+    try expectEqual(allVisible.map(\.id), [visible.id], "empty search should hide system prompt records")
+
+    let promptSearch = store.search("detected_language", hidingSystemPrompts: [AppSettings.defaultSystemPrompt])
+    try expect(promptSearch.isEmpty, "prompt search should still hide system prompt records")
+  },
   TestCase(name: "HotKeyTests/testOptionDHasDisplayAndCarbonMetadata") {
     let hotKey = HotKey.optionD
 

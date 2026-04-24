@@ -28,14 +28,15 @@ public final class HistoryStore: ObservableObject {
     try save()
   }
 
-  public func search(_ query: String) -> [HistoryRecord] {
+  public func search(_ query: String, hidingSystemPrompts systemPrompts: [String] = []) -> [HistoryRecord] {
+    let visibleRecords = recordsExcludingSystemPrompts(systemPrompts)
     let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else {
-      return records
+      return visibleRecords
     }
 
     let needle = trimmed.lowercased()
-    return records.filter { record in
+    return visibleRecords.filter { record in
       record.originalText.lowercased().contains(needle)
         || record.translatedText.lowercased().contains(needle)
         || record.detectedLanguage.lowercased().contains(needle)
@@ -72,5 +73,28 @@ public final class HistoryStore: ObservableObject {
     let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
       ?? FileManager.default.temporaryDirectory
     return base.appendingPathComponent("QuickTranslate", isDirectory: true)
+  }
+
+  private func recordsExcludingSystemPrompts(_ systemPrompts: [String]) -> [HistoryRecord] {
+    let hiddenPrompts = Set(
+      systemPrompts
+        .map(Self.normalizedPrompt)
+        .filter { !$0.isEmpty }
+    )
+
+    guard !hiddenPrompts.isEmpty else {
+      return records
+    }
+
+    return records.filter { record in
+      !hiddenPrompts.contains(Self.normalizedPrompt(record.originalText))
+    }
+  }
+
+  private static func normalizedPrompt(_ text: String) -> String {
+    text
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+      .split(whereSeparator: \.isWhitespace)
+      .joined(separator: " ")
   }
 }

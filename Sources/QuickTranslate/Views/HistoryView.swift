@@ -7,7 +7,14 @@ struct HistoryView: View {
 
   private var records: [HistoryRecord] {
     _ = appModel.historyRevision
-    return appModel.historyStore.search(searchText)
+    _ = appModel.settingsRevision
+    return appModel.historyStore.search(
+      searchText,
+      hidingSystemPrompts: [
+        appModel.settingsStore.settings.systemPrompt,
+        AppSettings.defaultSystemPrompt
+      ]
+    )
   }
 
   var body: some View {
