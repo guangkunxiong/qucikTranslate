@@ -10,6 +10,8 @@ final class AppModel: ObservableObject {
   let keychainStore: KeychainStore
 
   @Published private(set) var isTranslating = false
+  @Published private(set) var historyRevision = 0
+  @Published private(set) var settingsRevision = 0
   @Published var apiKey = ""
 
   private let openAIClient: OpenAICompatibleClient
@@ -60,6 +62,7 @@ final class AppModel: ObservableObject {
 
   func saveSettings(_ settings: AppSettings) {
     settingsStore.save(settings)
+    settingsRevision += 1
 
     do {
       try hotKeyService.register(settings.hotKey) { [weak self] in
@@ -92,6 +95,15 @@ final class AppModel: ObservableObject {
   func translate(record: HistoryRecord) {
     Task {
       await translate(text: record.originalText)
+    }
+  }
+
+  func deleteHistoryRecord(_ id: UUID) {
+    do {
+      try historyStore.delete(id)
+      historyRevision += 1
+    } catch {
+      showError(AppError.requestFailed(error.localizedDescription))
     }
   }
 
@@ -143,6 +155,7 @@ final class AppModel: ObservableObject {
         apiKey: trimmedAPIKey
       )
       _ = try historyStore.add(result)
+      historyRevision += 1
       floatingPanelController.show(
         state: .result(result, saved: true),
         onCopy: { [weak self] value in

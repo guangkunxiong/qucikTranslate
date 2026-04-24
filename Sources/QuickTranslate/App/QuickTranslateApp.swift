@@ -17,9 +17,7 @@ struct QuickTranslateApp: App {
     }
 
     Settings {
-      Text("Settings")
-        .frame(width: 420, height: 260)
-        .padding()
+      SettingsView()
         .environmentObject(appModel)
     }
 
