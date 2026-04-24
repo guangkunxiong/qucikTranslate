@@ -41,13 +41,20 @@ struct ContentView: View {
           Button {
             selection = item
           } label: {
-            Label(item.title, systemImage: item.systemImage)
+            HStack(spacing: 10) {
+              Image(systemName: item.systemImage)
+                .frame(width: 16)
+              Text(item.title)
+              Spacer(minLength: 0)
+            }
               .frame(maxWidth: .infinity, alignment: .leading)
               .padding(.vertical, 7)
               .padding(.horizontal, 10)
+              .contentShape(Rectangle())
               .background(selection == item ? Color.accentColor.opacity(0.18) : Color.clear, in: RoundedRectangle(cornerRadius: 6))
           }
           .buttonStyle(.plain)
+          .frame(maxWidth: .infinity, alignment: .leading)
           .foregroundStyle(selection == item ? .primary : .secondary)
           .padding(.horizontal, 8)
         }
