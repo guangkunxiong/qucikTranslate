@@ -23,7 +23,7 @@ enum FloatingPanelState: Identifiable {
 
 struct FloatingPanelView: View {
   let state: FloatingPanelState
-  let onStartTranslation: () -> Void
+  let onStartTranslation: (String) -> Void
   let onCopy: (String) -> Void
   let onClose: () -> Void
 
@@ -33,8 +33,10 @@ struct FloatingPanelView: View {
 
       switch state {
       case let .draft(draft):
-        sourceContent(draft)
-        draftTranslationContent()
+        DraftPanelContent(
+          draft: draft,
+          onStartTranslation: onStartTranslation
+        )
       case let .streaming(draft, translatedText):
         sourceContent(draft)
         streamingTranslationContent(translatedText)
@@ -80,40 +82,6 @@ struct FloatingPanelView: View {
           .frame(maxWidth: .infinity, alignment: .leading)
       }
       .frame(minHeight: 56, maxHeight: 120)
-    }
-    .padding(12)
-    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
-    .overlay {
-      RoundedRectangle(cornerRadius: 8)
-        .stroke(Color(nsColor: .separatorColor).opacity(0.5), lineWidth: 1)
-    }
-  }
-
-  private func draftTranslationContent() -> some View {
-    VStack(alignment: .leading, spacing: 12) {
-      HStack {
-        Label("译文", systemImage: "text.bubble")
-          .font(.subheadline.weight(.semibold))
-        Spacer()
-        Text("待开始")
-          .font(.caption)
-          .foregroundStyle(.secondary)
-      }
-
-      Text("按 Return 开始翻译")
-        .foregroundStyle(.secondary)
-        .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
-
-      HStack {
-        Spacer()
-        Button {
-          onStartTranslation()
-        } label: {
-          Label("开始翻译", systemImage: "return")
-        }
-        .keyboardShortcut(.return, modifiers: [])
-        .buttonStyle(.borderedProminent)
-      }
     }
     .padding(12)
     .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
@@ -200,5 +168,103 @@ struct FloatingPanelView: View {
         .foregroundStyle(.primary)
         .fixedSize(horizontal: false, vertical: true)
     }
+  }
+}
+
+private struct DraftPanelContent: View {
+  let draft: TranslationDraft
+  let onStartTranslation: (String) -> Void
+  @State private var sourceText: String
+
+  init(
+    draft: TranslationDraft,
+    onStartTranslation: @escaping (String) -> Void
+  ) {
+    self.draft = draft
+    self.onStartTranslation = onStartTranslation
+    _sourceText = State(initialValue: draft.sourceText)
+  }
+
+  private var editedDraft: TranslationDraft {
+    draft.replacingSourceText(sourceText)
+  }
+
+  private var trimmedSourceText: String {
+    sourceText.trimmingCharacters(in: .whitespacesAndNewlines)
+  }
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 12) {
+      editableSourceContent
+      draftTranslationContent
+    }
+  }
+
+  private var editableSourceContent: some View {
+    VStack(alignment: .leading, spacing: 10) {
+      HStack {
+        Label("原文", systemImage: "text.quote")
+          .font(.subheadline.weight(.semibold))
+        Spacer()
+        Text("识别：\(editedDraft.detectedLanguage)  翻译为：\(editedDraft.targetLanguage)")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+      }
+
+      EditableSourceTextView(
+        text: $sourceText,
+        onSubmit: submit
+      )
+      .frame(minHeight: 72, maxHeight: 140)
+    }
+    .padding(12)
+    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
+    .overlay {
+      RoundedRectangle(cornerRadius: 8)
+        .stroke(Color(nsColor: .separatorColor).opacity(0.5), lineWidth: 1)
+    }
+  }
+
+  private var draftTranslationContent: some View {
+    VStack(alignment: .leading, spacing: 12) {
+      HStack {
+        Label("译文", systemImage: "text.bubble")
+          .font(.subheadline.weight(.semibold))
+        Spacer()
+        Text("待开始")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+      }
+
+      Text("按 Return 开始翻译")
+        .foregroundStyle(.secondary)
+        .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
+
+      HStack {
+        Spacer()
+        Button {
+          submit()
+        } label: {
+          Label("开始翻译", systemImage: "return")
+        }
+        .keyboardShortcut(.return, modifiers: [])
+        .buttonStyle(.borderedProminent)
+        .disabled(trimmedSourceText.isEmpty)
+      }
+    }
+    .padding(12)
+    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
+    .overlay {
+      RoundedRectangle(cornerRadius: 8)
+        .stroke(Color(nsColor: .separatorColor).opacity(0.5), lineWidth: 1)
+    }
+  }
+
+  private func submit() {
+    guard !trimmedSourceText.isEmpty else {
+      return
+    }
+
+    onStartTranslation(trimmedSourceText)
   }
 }

@@ -7,7 +7,7 @@ final class FloatingPanelController {
 
   func show(
     state: FloatingPanelState,
-    onStartTranslation: @escaping () -> Void = {},
+    onStartTranslation: @escaping (String) -> Void = { _ in },
     onCopy: @escaping (String) -> Void
   ) {
     let rootView = FloatingPanelView(
@@ -28,7 +28,6 @@ final class FloatingPanelController {
     let size = hostingController.view.fittingSize
     panel.setContentSize(NSSize(width: max(size.width, 460), height: max(size.height, 240)))
     position(panel)
-    NSApp.activate(ignoringOtherApps: true)
     panel.makeKeyAndOrderFront(nil)
   }
 
@@ -39,7 +38,7 @@ final class FloatingPanelController {
   private func makePanel() -> NSPanel {
     let panel = KeyableFloatingPanel(
       contentRect: NSRect(x: 0, y: 0, width: 460, height: 260),
-      styleMask: [.titled, .utilityWindow, .fullSizeContentView],
+      styleMask: [.nonactivatingPanel, .titled, .utilityWindow, .fullSizeContentView],
       backing: .buffered,
       defer: false
     )

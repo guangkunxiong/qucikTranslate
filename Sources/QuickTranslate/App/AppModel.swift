@@ -136,8 +136,8 @@ final class AppModel: ObservableObject {
     pendingDraft = draft
     floatingPanelController.show(
       state: .draft(draft),
-      onStartTranslation: { [weak self] in
-        self?.startPendingTranslation()
+      onStartTranslation: { [weak self] sourceText in
+        self?.startPendingTranslation(sourceText: sourceText)
       },
       onCopy: { [weak self] value in
         self?.copyTranslation(value)
@@ -145,23 +145,30 @@ final class AppModel: ObservableObject {
     )
   }
 
-  private func startPendingTranslation() {
+  private func startPendingTranslation(sourceText: String? = nil) {
     guard !isTranslating else {
       return
     }
 
     Task {
-      await beginPendingTranslation()
+      await beginPendingTranslation(sourceText: sourceText)
     }
   }
 
-  private func beginPendingTranslation() async {
+  private func beginPendingTranslation(sourceText: String?) async {
     guard let draft = pendingDraft else {
       return
     }
 
+    let editedText = sourceText?.trimmingCharacters(in: .whitespacesAndNewlines) ?? draft.sourceText
+    guard !editedText.isEmpty else {
+      showError(AppError.noSelectedText)
+      return
+    }
+
+    let editedDraft = draft.replacingSourceText(editedText)
     pendingDraft = nil
-    await streamTranslate(draft: draft)
+    await streamTranslate(draft: editedDraft)
   }
 
   private func streamTranslate(draft: TranslationDraft) async {

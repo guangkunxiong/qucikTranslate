@@ -54,6 +54,10 @@ public struct TranslationDraft: Equatable, Identifiable, Sendable {
     self.detectedLanguage = detectedLanguage ?? (containsChinese ? "中文" : "非中文")
     self.targetLanguage = targetLanguage ?? (containsChinese ? "英文" : "简体中文")
   }
+
+  public func replacingSourceText(_ sourceText: String) -> TranslationDraft {
+    TranslationDraft(id: id, sourceText: sourceText)
+  }
 }
 
 struct ChatCompletionRequest: Encodable {

@@ -113,6 +113,15 @@ let tests: [TestCase] = [
     try expectEqual(draft.detectedLanguage, "非中文", "detected language")
     try expectEqual(draft.targetLanguage, "简体中文", "target language")
   },
+  TestCase(name: "TranslationDraftTests/testReplacingSourceTextKeepsIdentityAndReinfersDirection") {
+    let draft = TranslationDraft(sourceText: "hello world")
+    let edited = draft.replacingSourceText("你好")
+
+    try expectEqual(edited.id, draft.id, "draft id")
+    try expectEqual(edited.sourceText, "你好", "edited source text")
+    try expectEqual(edited.detectedLanguage, "中文", "detected language")
+    try expectEqual(edited.targetLanguage, "英文", "target language")
+  },
   TestCase(name: "StreamingChatCompletionParserTests/testParsesContentDelta") {
     let line = #"data: {"choices":[{"delta":{"content":"你"}}]}"#
 

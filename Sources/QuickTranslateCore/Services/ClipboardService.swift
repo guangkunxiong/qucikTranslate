@@ -34,6 +34,10 @@ public final class ClipboardService {
     pasteboard.string(forType: .string) ?? ""
   }
 
+  public var changeCount: Int {
+    pasteboard.changeCount
+  }
+
   public func restore(_ snapshot: PasteboardSnapshot) {
     pasteboard.clearContents()
     let items = snapshot.items.map { snapshotItem in

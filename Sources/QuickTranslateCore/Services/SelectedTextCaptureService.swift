@@ -51,12 +51,35 @@ public final class SelectedTextCaptureService {
 
   private func copySelectedTextFallback() async -> String {
     let snapshot = clipboardService.snapshot()
+    let changeCount = clipboardService.changeCount
     sendCopyShortcut()
 
-    try? await Task.sleep(nanoseconds: 150_000_000)
-    let copiedText = clipboardService.readString()
+    let copiedText = await waitForCopiedText(after: changeCount)
     clipboardService.restore(snapshot)
     return copiedText.trimmingCharacters(in: .whitespacesAndNewlines)
+  }
+
+  private func waitForCopiedText(after changeCount: Int) async -> String {
+    var didChange = false
+
+    for _ in 0..<14 {
+      try? await Task.sleep(nanoseconds: 50_000_000)
+
+      if clipboardService.changeCount != changeCount {
+        didChange = true
+      }
+
+      guard didChange else {
+        continue
+      }
+
+      let copiedText = clipboardService.readString()
+      if !copiedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        return copiedText
+      }
+    }
+
+    return ""
   }
 
   private func sendCopyShortcut() {
