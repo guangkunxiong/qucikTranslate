@@ -166,6 +166,11 @@ let tests: [TestCase] = [
     try expectEqual(draft.detectedLanguage, "非中文", "detected language")
     try expectEqual(draft.targetLanguage, "简体中文", "target language")
   },
+  TestCase(name: "TranslationDraftTests/testCreatesEmptyEditableDraftFromMissingSelection") {
+    let draft = TranslationDraft.fromCapturedSelection(" \n ")
+
+    try expectEqual(draft.sourceText, "", "empty captured selection should become an editable empty draft")
+  },
   TestCase(name: "TranslationDraftTests/testReplacingSourceTextKeepsIdentityAndReinfersDirection") {
     let draft = TranslationDraft(sourceText: "hello world")
     let edited = draft.replacingSourceText("你好")

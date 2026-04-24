@@ -129,23 +129,11 @@ final class AppModel: ObservableObject {
 
   private func translateCurrentSelection() async {
     let text = await selectedTextCaptureService.captureSelectedText()
-      .trimmingCharacters(in: .whitespacesAndNewlines)
-
-    guard !text.isEmpty else {
-      if !PermissionService.isAccessibilityTrusted {
-        PermissionRequestPresenter.requestAccessibilityPermission()
-        return
-      }
-
-      showError(AppError.noSelectedText)
-      return
-    }
-
     showDraft(text)
   }
 
   private func showDraft(_ text: String) {
-    let draft = TranslationDraft(sourceText: text)
+    let draft = TranslationDraft.fromCapturedSelection(text)
     pendingDraft = draft
     floatingPanelController.show(
       state: .draft(draft),

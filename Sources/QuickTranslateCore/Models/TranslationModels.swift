@@ -58,6 +58,10 @@ public struct TranslationDraft: Equatable, Identifiable, Sendable {
   public func replacingSourceText(_ sourceText: String) -> TranslationDraft {
     TranslationDraft(id: id, sourceText: sourceText)
   }
+
+  public static func fromCapturedSelection(_ sourceText: String) -> TranslationDraft {
+    TranslationDraft(sourceText: sourceText.trimmingCharacters(in: .whitespacesAndNewlines))
+  }
 }
 
 struct ChatCompletionRequest: Encodable {
