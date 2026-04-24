@@ -31,6 +31,19 @@ struct FloatingPanelView: View {
     VStack(alignment: .leading, spacing: 12) {
       header
 
+      ScrollView {
+        panelContent
+          .frame(maxWidth: .infinity, alignment: .topLeading)
+      }
+    }
+    .padding(16)
+    .frame(minWidth: 420, maxWidth: .infinity, minHeight: 240, maxHeight: .infinity, alignment: .topLeading)
+    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+  }
+
+  @ViewBuilder
+  private var panelContent: some View {
+    VStack(alignment: .leading, spacing: 12) {
       switch state {
       case let .draft(draft):
         DraftPanelContent(
@@ -46,9 +59,6 @@ struct FloatingPanelView: View {
         errorContent(message)
       }
     }
-    .padding(16)
-    .frame(minWidth: 420, maxWidth: .infinity, minHeight: 240, maxHeight: .infinity)
-    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
   }
 
   private var header: some View {
@@ -75,15 +85,8 @@ struct FloatingPanelView: View {
           .foregroundStyle(.secondary)
       }
 
-      ScrollView {
-        Text(verbatim: draft.sourceText)
-          .font(.body)
-          .lineLimit(nil)
-          .multilineTextAlignment(.leading)
-          .textSelection(.enabled)
-          .frame(maxWidth: .infinity, alignment: .topLeading)
-      }
-      .frame(minHeight: 56, maxHeight: .infinity)
+      textBlock(draft.sourceText)
+        .frame(minHeight: 56, alignment: .topLeading)
     }
     .padding(12)
     .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
@@ -103,13 +106,12 @@ struct FloatingPanelView: View {
           .controlSize(.small)
       }
 
-      scrollableText(
+      textBlock(
         translatedText.isEmpty ? "正在翻译..." : translatedText,
         isPlaceholder: translatedText.isEmpty
       )
-      .frame(minHeight: 100, maxHeight: .infinity)
+      .frame(minHeight: 100, alignment: .topLeading)
     }
-    .frame(maxHeight: .infinity)
     .padding(12)
     .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
     .overlay {
@@ -139,8 +141,8 @@ struct FloatingPanelView: View {
             .foregroundStyle(saved ? .green : .secondary)
         }
 
-        scrollableText(result.translatedText)
-          .frame(minHeight: 120, maxHeight: .infinity)
+        textBlock(result.translatedText)
+          .frame(minHeight: 120, alignment: .topLeading)
 
         HStack {
           Spacer()
@@ -151,7 +153,6 @@ struct FloatingPanelView: View {
           }
         }
       }
-      .frame(maxHeight: .infinity)
       .padding(12)
       .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
       .overlay {
@@ -171,16 +172,14 @@ struct FloatingPanelView: View {
     }
   }
 
-  private func scrollableText(_ text: String, isPlaceholder: Bool = false) -> some View {
-    ScrollView {
-      Text(verbatim: text)
-        .font(.body)
-        .foregroundStyle(isPlaceholder ? .secondary : .primary)
-        .lineLimit(nil)
-        .multilineTextAlignment(.leading)
-        .textSelection(.enabled)
-        .frame(maxWidth: .infinity, alignment: .topLeading)
-    }
+  private func textBlock(_ text: String, isPlaceholder: Bool = false) -> some View {
+    Text(verbatim: text)
+      .font(.body)
+      .foregroundStyle(isPlaceholder ? .secondary : .primary)
+      .lineLimit(nil)
+      .multilineTextAlignment(.leading)
+      .textSelection(.enabled)
+      .frame(maxWidth: .infinity, alignment: .topLeading)
   }
 }
 
@@ -228,9 +227,8 @@ private struct DraftPanelContent: View {
         text: $sourceText,
         onSubmit: submit
       )
-      .frame(minHeight: 88, maxHeight: .infinity)
+      .frame(minHeight: 88, idealHeight: 128, maxHeight: 220)
     }
-    .frame(maxHeight: .infinity)
     .padding(12)
     .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
     .overlay {
