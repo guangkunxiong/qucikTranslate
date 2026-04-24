@@ -77,6 +77,40 @@ let tests: [TestCase] = [
     let json = try JSONSerialization.jsonObject(with: body) as? [String: Any]
     try expectEqual(json?["model"] as? String, "gpt-test", "request model")
     try expect(json?["messages"] != nil, "request messages should exist")
+  },
+  TestCase(name: "SettingsStoreTests/testPersistsSettingsInUserDefaultsSuite") {
+    let defaults = UserDefaults(suiteName: "SettingsStoreTests-\(UUID().uuidString)")!
+    let store = SettingsStore(userDefaults: defaults)
+
+    var settings = AppSettings.defaults
+    settings.model = "deepseek-chat"
+    settings.systemPrompt = "Custom prompt"
+    store.save(settings)
+
+    let reloaded = SettingsStore(userDefaults: defaults)
+    try expectEqual(reloaded.settings.model, "deepseek-chat", "persisted model")
+    try expectEqual(reloaded.settings.systemPrompt, "Custom prompt", "persisted prompt")
+  },
+  TestCase(name: "HistoryStoreTests/testAddsSearchesAndDeletesHistoryRecords") {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    let store = HistoryStore(directoryURL: directory)
+
+    let result = TranslationResult(
+      originalText: "hello",
+      translatedText: "你好",
+      detectedLanguage: "English",
+      targetLanguage: "Simplified Chinese",
+      model: "gpt-test",
+      timestamp: Date(timeIntervalSince1970: 1)
+    )
+
+    let record = try store.add(result)
+    try expectEqual(store.records.count, 1, "history count after add")
+    try expectEqual(store.search("hello").map(\.id), [record.id], "search original text")
+    try expectEqual(store.search("你好").map(\.id), [record.id], "search translated text")
+
+    try store.delete(record.id)
+    try expect(store.records.isEmpty, "history should be empty after delete")
   }
 ]
 
