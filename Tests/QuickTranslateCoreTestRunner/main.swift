@@ -42,6 +42,16 @@ let tests: [TestCase] = [
     try expectEqual(AppError.missingModel.errorDescription, "请先在设置中配置模型。", "missing model error")
     try expectEqual(AppError.missingAccessibilityPermission.errorDescription, "请在系统设置中为快捷翻译开启辅助功能权限。", "missing permission error")
   },
+  TestCase(name: "PermissionServiceTests/testAccessibilityPermissionExplanationIsSpecific") {
+    let explanation = PermissionService.accessibilityPermissionExplanation
+
+    try expectEqual(explanation.title, "为什么需要辅助功能权限？", "permission explanation title")
+    try expect(explanation.message.contains("Option+D"), "permission explanation should mention shortcut")
+    try expect(explanation.message.contains("选中文本"), "permission explanation should mention selected text")
+    try expect(explanation.message.contains("Command+C"), "permission explanation should mention copy fallback")
+    try expect(explanation.message.contains("不会记录键盘输入"), "permission explanation should state it does not log keystrokes")
+    try expect(explanation.message.contains("不会读取屏幕内容"), "permission explanation should state it does not read screen content")
+  },
   TestCase(name: "TranslationResponseParserTests/testParsesStructuredJSONTranslation") {
     let content = """
     {"detected_language":"English","target_language":"Simplified Chinese","translation":"你好"}

@@ -119,8 +119,7 @@ final class AppModel: ObservableObject {
 
     guard !text.isEmpty else {
       if !PermissionService.isAccessibilityTrusted {
-        _ = PermissionService.promptForAccessibilityPermission()
-        showError(AppError.missingAccessibilityPermission)
+        PermissionRequestPresenter.requestAccessibilityPermission()
         return
       }
 

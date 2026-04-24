@@ -40,16 +40,23 @@ struct SettingsView: View {
       }
 
       Section("权限") {
-        HStack {
-          Label(
-            PermissionService.isAccessibilityTrusted ? "辅助功能权限已开启" : "辅助功能权限未开启",
-            systemImage: PermissionService.isAccessibilityTrusted ? "checkmark.circle" : "exclamationmark.triangle"
-          )
-          .foregroundStyle(PermissionService.isAccessibilityTrusted ? .green : .yellow)
-          Spacer()
-          Button("请求权限") {
-            _ = PermissionService.promptForAccessibilityPermission()
+        VStack(alignment: .leading, spacing: 10) {
+          HStack {
+            Label(
+              PermissionService.isAccessibilityTrusted ? "辅助功能权限已开启" : "辅助功能权限未开启",
+              systemImage: PermissionService.isAccessibilityTrusted ? "checkmark.circle" : "exclamationmark.triangle"
+            )
+            .foregroundStyle(PermissionService.isAccessibilityTrusted ? .green : .yellow)
+            Spacer()
+            Button("了解并打开系统设置") {
+              PermissionRequestPresenter.requestAccessibilityPermission()
+            }
           }
+
+          Text(PermissionService.accessibilityPermissionExplanation.message)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
         }
       }
 
