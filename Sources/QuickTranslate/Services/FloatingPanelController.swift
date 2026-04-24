@@ -21,13 +21,16 @@ final class FloatingPanelController {
 
     let hostingController = NSHostingController(rootView: rootView)
     let panel = panel ?? makePanel()
+    let shouldResetSize = !panel.isVisible
     panel.contentViewController = hostingController
     self.panel = panel
 
     hostingController.view.layoutSubtreeIfNeeded()
-    let size = hostingController.view.fittingSize
-    panel.setContentSize(NSSize(width: max(size.width, 460), height: max(size.height, 240)))
-    position(panel)
+    if shouldResetSize {
+      let size = hostingController.view.fittingSize
+      panel.setContentSize(preferredContentSize(for: panel, fittingSize: size))
+      position(panel)
+    }
     panel.makeKeyAndOrderFront(nil)
   }
 
@@ -38,7 +41,7 @@ final class FloatingPanelController {
   private func makePanel() -> NSPanel {
     let panel = KeyableFloatingPanel(
       contentRect: NSRect(x: 0, y: 0, width: 460, height: 260),
-      styleMask: [.nonactivatingPanel, .titled, .utilityWindow, .fullSizeContentView],
+      styleMask: [.nonactivatingPanel, .titled, .utilityWindow, .resizable, .fullSizeContentView],
       backing: .buffered,
       defer: false
     )
@@ -51,10 +54,22 @@ final class FloatingPanelController {
     panel.backgroundColor = .clear
     panel.isOpaque = false
     panel.hasShadow = true
+    panel.minSize = NSSize(width: 420, height: 260)
     panel.standardWindowButton(.closeButton)?.isHidden = true
     panel.standardWindowButton(.miniaturizeButton)?.isHidden = true
     panel.standardWindowButton(.zoomButton)?.isHidden = true
     return panel
+  }
+
+  private func preferredContentSize(for panel: NSPanel, fittingSize: NSSize) -> NSSize {
+    let screen = screenForPanel()
+    let maxHeight = max(260, screen.visibleFrame.height - 72)
+    let maxWidth = max(420, screen.visibleFrame.width - 72)
+
+    return NSSize(
+      width: min(max(fittingSize.width, 460), maxWidth),
+      height: min(max(fittingSize.height, 320), maxHeight)
+    )
   }
 
   private func position(_ panel: NSPanel) {

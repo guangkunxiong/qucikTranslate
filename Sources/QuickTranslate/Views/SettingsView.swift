@@ -83,6 +83,7 @@ struct SettingsView: View {
   }
 
   private func load() {
+    appModel.loadAPIKeyIfNeeded()
     let settings = appModel.settingsStore.settings
     baseURLString = settings.baseURL.absoluteString
     apiKey = appModel.apiKey

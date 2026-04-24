@@ -20,6 +20,7 @@ final class AppModel: ObservableObject {
   private let floatingPanelController: FloatingPanelController
   private var started = false
   private var pendingDraft: TranslationDraft?
+  private var apiKeyCache = CachedSecretValue()
 
   private let logger = Logger(
     subsystem: "com.only77.QuickTranslate",
@@ -42,7 +43,6 @@ final class AppModel: ObservableObject {
     self.selectedTextCaptureService = selectedTextCaptureService
     self.hotKeyService = hotKeyService
     self.floatingPanelController = floatingPanelController
-    self.apiKey = (try? keychainStore.loadAPIKey()) ?? ""
   }
 
   func start() {
@@ -75,16 +75,34 @@ final class AppModel: ObservableObject {
   }
 
   func saveAPIKey(_ value: String) {
-    apiKey = value
+    let normalizedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard apiKeyCache.shouldPersist(normalizedValue) else {
+      apiKey = normalizedValue
+      return
+    }
+
     do {
-      if value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+      if normalizedValue.isEmpty {
         try keychainStore.deleteAPIKey()
       } else {
-        try keychainStore.saveAPIKey(value)
+        try keychainStore.saveAPIKey(normalizedValue)
       }
+      apiKeyCache.markSaved(normalizedValue)
+      apiKey = normalizedValue
     } catch {
       showError(AppError.requestFailed(error.localizedDescription))
     }
+  }
+
+  func loadAPIKeyIfNeeded() {
+    guard !apiKeyCache.isLoaded else {
+      apiKey = apiKeyCache.value
+      return
+    }
+
+    let loadedValue = (try? keychainStore.loadAPIKey()) ?? ""
+    apiKeyCache.markLoaded(loadedValue)
+    apiKey = loadedValue
   }
 
   func translateSelection() {
@@ -171,6 +189,8 @@ final class AppModel: ObservableObject {
   }
 
   private func streamTranslate(draft: TranslationDraft) async {
+    loadAPIKeyIfNeeded()
+
     let settings = settingsStore.settings
     let trimmedAPIKey = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
     let trimmedModel = settings.model.trimmingCharacters(in: .whitespacesAndNewlines)

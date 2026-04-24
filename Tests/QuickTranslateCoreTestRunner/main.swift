@@ -52,6 +52,22 @@ let tests: [TestCase] = [
     try expect(explanation.message.contains("不会记录键盘输入"), "permission explanation should state it does not log keystrokes")
     try expect(explanation.message.contains("不会读取屏幕内容"), "permission explanation should state it does not read screen content")
   },
+  TestCase(name: "CachedSecretValueTests/testUnchangedLoadedValueDoesNotNeedPersisting") {
+    var cache = CachedSecretValue()
+
+    try expect(!cache.isLoaded, "cache should start unloaded")
+    try expect(cache.shouldPersist("secret"), "unloaded cache should persist a provided value")
+
+    cache.markLoaded("secret")
+    try expect(cache.isLoaded, "cache should be loaded")
+    try expectEqual(cache.value, "secret", "loaded value")
+    try expect(!cache.shouldPersist("secret"), "unchanged loaded value should not persist again")
+    try expect(cache.shouldPersist("new-secret"), "changed loaded value should persist")
+
+    cache.markSaved("new-secret")
+    try expectEqual(cache.value, "new-secret", "saved value")
+    try expect(!cache.shouldPersist("new-secret"), "unchanged saved value should not persist again")
+  },
   TestCase(name: "TranslationResponseParserTests/testParsesStructuredJSONTranslation") {
     let content = """
     {"detected_language":"English","target_language":"Simplified Chinese","translation":"你好"}
