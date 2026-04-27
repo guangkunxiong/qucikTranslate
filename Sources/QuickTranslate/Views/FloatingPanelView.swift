@@ -22,6 +22,8 @@ enum FloatingPanelState: Identifiable {
 }
 
 struct FloatingPanelView: View {
+  private let panelShape = RoundedRectangle(cornerRadius: 22, style: .continuous)
+
   let state: FloatingPanelState
   let onPinChanged: (Bool) -> Void
   let onStartTranslation: (String) -> Void
@@ -49,23 +51,43 @@ struct FloatingPanelView: View {
   }
 
   var body: some View {
-    FloatingPanelChrome {
-      VStack(alignment: .leading, spacing: 16) {
-        header
+    VStack(alignment: .leading, spacing: 6) {
+      header
 
-        ScrollView {
-          GlassEffectContainer(spacing: 18) {
-            panelContent
-              .frame(maxWidth: .infinity, alignment: .topLeading)
-          }
+      ScrollView {
+        GlassEffectContainer(spacing: 6) {
+          panelContent
+            .frame(maxWidth: .infinity, alignment: .topLeading)
         }
       }
     }
+    .padding(10)
+    .frame(minWidth: 460, maxWidth: .infinity, minHeight: 280, maxHeight: .infinity, alignment: .topLeading)
+    .foregroundStyle(.white)
+    .background {
+      panelShape
+        .fill(Color.black)
+        .overlay {
+          LinearGradient(
+            colors: [
+              Color.white.opacity(0.12),
+              Color(red: 0.06, green: 0.08, blue: 0.10).opacity(0.5),
+              Color.black
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+          )
+          .clipShape(panelShape)
+        }
+    }
+    .clipShape(panelShape)
+    .shadow(color: .black.opacity(0.46), radius: 18, x: 0, y: 10)
+    .preferredColorScheme(.dark)
   }
 
   @ViewBuilder
   private var panelContent: some View {
-    VStack(alignment: .leading, spacing: 16) {
+    VStack(alignment: .leading, spacing: 6) {
       switch state {
       case let .draft(draft):
         DraftPanelContent(
@@ -85,19 +107,30 @@ struct FloatingPanelView: View {
   }
 
   private var header: some View {
-    HStack(spacing: 14) {
-      IconGlassButton(
-        systemName: pinned ? "pin.fill" : "pin",
-        help: pinned ? "取消固定" : "固定弹窗，点击其他区域不收起"
-      ) {
+    HStack(spacing: 8) {
+      Button {
         pinned.toggle()
         onPinChanged(pinned)
+      } label: {
+        Image(systemName: pinned ? "pin.fill" : "pin")
+          .frame(width: 14, height: 14)
       }
+      .buttonStyle(.glass)
+      .buttonBorderShape(.circle)
+      .controlSize(.small)
+      .help(pinned ? "取消固定" : "固定弹窗，点击其他区域不收起")
 
-      HeaderIdentity()
+      Text("快捷翻译")
+        .font(.headline.weight(.semibold))
       Spacer()
-
-      IconGlassButton(systemName: "xmark", help: "关闭", action: onClose)
+      Button(action: onClose) {
+        Image(systemName: "xmark")
+          .frame(width: 14, height: 14)
+      }
+      .buttonStyle(.glass)
+      .buttonBorderShape(.circle)
+      .controlSize(.small)
+      .help("关闭")
     }
   }
 
@@ -111,11 +144,10 @@ struct FloatingPanelView: View {
 
   private func streamingTranslationContent(_ translatedText: String, targetLanguage: String) -> some View {
     GlassPanel {
-      VStack(alignment: .leading, spacing: 12) {
-        SectionHeader(
-          title: "译文",
-          systemImage: "text.bubble"
-        ) {
+      VStack(alignment: .leading, spacing: 6) {
+        HStack {
+          Label("译文", systemImage: "text.bubble")
+            .font(.headline)
           Spacer()
           ProgressView()
             .controlSize(.small)
@@ -132,7 +164,7 @@ struct FloatingPanelView: View {
           translatedText.isEmpty ? "正在翻译..." : translatedText,
           isPlaceholder: translatedText.isEmpty
         )
-        .frame(minHeight: 100, alignment: .topLeading)
+        .frame(minHeight: 64, alignment: .topLeading)
       }
     }
   }
@@ -145,17 +177,19 @@ struct FloatingPanelView: View {
       targetLanguage: result.targetLanguage
     )
 
-    return VStack(alignment: .leading, spacing: 12) {
+    return VStack(alignment: .leading, spacing: 6) {
       sourceContent(draft)
 
       GlassPanel {
-        VStack(alignment: .leading, spacing: 12) {
-          SectionHeader(
-            title: "译文",
-            systemImage: "text.bubble"
-          ) {
+        VStack(alignment: .leading, spacing: 6) {
+          HStack {
+            Label("译文", systemImage: "text.bubble")
+              .font(.headline)
             Spacer()
-            StatusPill(text: saved ? "已保存" : "未保存", isActive: saved)
+            Text(saved ? "已保存" : "未保存")
+              .font(.caption)
+              .fontWeight(.medium)
+              .foregroundStyle(saved ? .green : .white.opacity(0.6))
             SpeechButton(
               text: result.translatedText,
               languageHint: result.targetLanguage,
@@ -165,7 +199,7 @@ struct FloatingPanelView: View {
           }
 
           textBlock(result.translatedText)
-            .frame(minHeight: 120, alignment: .topLeading)
+            .frame(minHeight: 72, alignment: .topLeading)
 
           HStack {
             Spacer()
@@ -176,7 +210,6 @@ struct FloatingPanelView: View {
             }
             .buttonStyle(.glass)
             .controlSize(.small)
-            .buttonBorderShape(.capsule)
           }
         }
       }
@@ -206,105 +239,6 @@ struct FloatingPanelView: View {
   }
 }
 
-private struct FloatingPanelChrome<Content: View>: View {
-  private let shape = RoundedRectangle(cornerRadius: 28, style: .continuous)
-  let content: Content
-
-  init(@ViewBuilder content: () -> Content) {
-    self.content = content()
-  }
-
-  var body: some View {
-    content
-      .padding(20)
-      .frame(minWidth: 540, maxWidth: .infinity, minHeight: 380, maxHeight: .infinity, alignment: .topLeading)
-      .foregroundStyle(.white)
-      .background {
-        shape
-          .fill(Color.black)
-          .overlay {
-            LiquidGlassBackdrop()
-              .clipShape(shape)
-          }
-      }
-      .overlay {
-        shape
-          .strokeBorder(
-            LinearGradient(
-              colors: [
-                Color.white.opacity(0.42),
-                Color.white.opacity(0.12),
-                Color.white.opacity(0.04)
-              ],
-              startPoint: .topLeading,
-              endPoint: .bottomTrailing
-            ),
-            lineWidth: 1
-          )
-      }
-      .overlay(alignment: .topLeading) {
-        shape
-          .strokeBorder(Color.white.opacity(0.22), lineWidth: 0.5)
-          .blur(radius: 0.4)
-          .padding(1)
-      }
-      .clipShape(shape)
-      .shadow(color: .black.opacity(0.65), radius: 36, x: 0, y: 24)
-      .shadow(color: Color(red: 0.1, green: 0.48, blue: 1).opacity(0.18), radius: 44, x: -12, y: -10)
-      .preferredColorScheme(.dark)
-  }
-}
-
-private struct LiquidGlassBackdrop: View {
-  var body: some View {
-    ZStack {
-      Color.black
-
-      LinearGradient(
-        colors: [
-          Color.white.opacity(0.18),
-          Color.white.opacity(0.04),
-          Color.clear
-        ],
-        startPoint: .topLeading,
-        endPoint: .center
-      )
-
-      LinearGradient(
-        colors: [
-          Color(red: 0.05, green: 0.55, blue: 1).opacity(0.26),
-          Color.clear,
-          Color(red: 0.1, green: 1, blue: 0.82).opacity(0.14)
-        ],
-        startPoint: .topTrailing,
-        endPoint: .bottomLeading
-      )
-      .blendMode(.screen)
-
-      DiagonalGlassSheen()
-        .stroke(Color.white.opacity(0.09), lineWidth: 1)
-        .blur(radius: 0.3)
-        .padding(24)
-    }
-  }
-}
-
-private struct DiagonalGlassSheen: Shape {
-  func path(in rect: CGRect) -> Path {
-    var path = Path()
-    let offsets: [CGFloat] = [-0.25, 0.1, 0.45, 0.8]
-
-    for offset in offsets {
-      let start = CGPoint(x: rect.minX + rect.width * offset, y: rect.minY)
-      let end = CGPoint(x: rect.minX + rect.width * (offset + 0.35), y: rect.maxY)
-      path.move(to: start)
-      path.addLine(to: end)
-    }
-
-    return path
-  }
-}
-
 private struct GlassPanel<Content: View>: View {
   let content: Content
 
@@ -314,111 +248,16 @@ private struct GlassPanel<Content: View>: View {
 
   var body: some View {
     content
-      .padding(18)
+      .padding(10)
       .frame(maxWidth: .infinity, alignment: .topLeading)
       .glassEffect(
-        .regular.interactive().tint(.white.opacity(0.12)),
-        in: RoundedRectangle(cornerRadius: 24, style: .continuous)
+        .regular.tint(.white.opacity(0.05)),
+        in: RoundedRectangle(cornerRadius: 15, style: .continuous)
       )
       .overlay {
-        RoundedRectangle(cornerRadius: 24, style: .continuous)
-          .strokeBorder(
-            LinearGradient(
-              colors: [
-                Color.white.opacity(0.32),
-                Color.white.opacity(0.08),
-                Color.white.opacity(0.18)
-              ],
-              startPoint: .topLeading,
-              endPoint: .bottomTrailing
-            ),
-            lineWidth: 1
-          )
+        RoundedRectangle(cornerRadius: 15, style: .continuous)
+          .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
       }
-      .shadow(color: .black.opacity(0.24), radius: 18, x: 0, y: 10)
-  }
-}
-
-private struct HeaderIdentity: View {
-  var body: some View {
-    HStack(spacing: 10) {
-      Image(systemName: "character.book.closed")
-        .font(.title3.weight(.semibold))
-        .symbolRenderingMode(.hierarchical)
-
-      VStack(alignment: .leading, spacing: 2) {
-        Text("快捷翻译")
-          .font(.title3.weight(.semibold))
-        Text("Liquid Glass")
-          .font(.caption2.weight(.medium))
-          .foregroundStyle(.white.opacity(0.5))
-      }
-    }
-    .padding(.horizontal, 12)
-    .padding(.vertical, 8)
-    .glassEffect(
-      .regular.interactive().tint(.white.opacity(0.08)),
-      in: Capsule()
-    )
-  }
-}
-
-private struct SectionHeader<Trailing: View>: View {
-  let title: String
-  let systemImage: String
-  let trailing: Trailing
-
-  init(
-    title: String,
-    systemImage: String,
-    @ViewBuilder trailing: () -> Trailing
-  ) {
-    self.title = title
-    self.systemImage = systemImage
-    self.trailing = trailing()
-  }
-
-  var body: some View {
-    HStack(spacing: 10) {
-      Label(title, systemImage: systemImage)
-        .font(.headline)
-        .symbolRenderingMode(.hierarchical)
-      trailing
-    }
-  }
-}
-
-private struct StatusPill: View {
-  let text: String
-  let isActive: Bool
-
-  var body: some View {
-    Text(text)
-      .font(.caption.weight(.semibold))
-      .foregroundStyle(isActive ? Color.green : Color.white.opacity(0.62))
-      .padding(.horizontal, 8)
-      .padding(.vertical, 4)
-      .glassEffect(
-        .regular.interactive().tint((isActive ? Color.green : Color.white).opacity(isActive ? 0.16 : 0.08)),
-        in: Capsule()
-      )
-  }
-}
-
-private struct IconGlassButton: View {
-  let systemName: String
-  let help: String
-  let action: () -> Void
-
-  var body: some View {
-    Button(action: action) {
-      Image(systemName: systemName)
-        .frame(width: 16, height: 16)
-    }
-    .buttonStyle(.glass)
-    .buttonBorderShape(.circle)
-    .controlSize(.small)
-    .help(help)
   }
 }
 
@@ -433,10 +272,17 @@ private struct SpeechButton: View {
   }
 
   var body: some View {
-    IconGlassButton(systemName: "speaker.wave.2", help: help) {
+    Button {
       onSpeak(text, languageHint)
+    } label: {
+      Image(systemName: "speaker.wave.2")
+        .frame(width: 14, height: 14)
     }
+    .buttonStyle(.glass)
+    .buttonBorderShape(.circle)
+    .controlSize(.small)
     .disabled(isDisabled)
+    .help(help)
   }
 }
 
@@ -467,11 +313,10 @@ private struct EditableSourcePanelContent: View {
 
   var body: some View {
     GlassPanel {
-      VStack(alignment: .leading, spacing: 12) {
-        SectionHeader(
-          title: "原文",
-          systemImage: "text.quote"
-        ) {
+      VStack(alignment: .leading, spacing: 6) {
+        HStack {
+          Label("原文", systemImage: "text.quote")
+            .font(.headline)
           Spacer()
           Text("识别：\(editedDraft.detectedLanguage)  翻译为：\(editedDraft.targetLanguage)")
             .font(.caption)
@@ -489,7 +334,7 @@ private struct EditableSourcePanelContent: View {
           text: $sourceText,
           onSubmit: submit
         )
-        .frame(minHeight: 116, idealHeight: 150, maxHeight: 260)
+        .frame(minHeight: 64, idealHeight: 82, maxHeight: 180)
       }
     }
   }
@@ -529,7 +374,7 @@ private struct DraftPanelContent: View {
   }
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 12) {
+    VStack(alignment: .leading, spacing: 6) {
       editableSourceContent
       draftTranslationContent
     }
@@ -537,11 +382,10 @@ private struct DraftPanelContent: View {
 
   private var editableSourceContent: some View {
     GlassPanel {
-      VStack(alignment: .leading, spacing: 12) {
-        SectionHeader(
-          title: "原文",
-          systemImage: "text.quote"
-        ) {
+      VStack(alignment: .leading, spacing: 6) {
+        HStack {
+          Label("原文", systemImage: "text.quote")
+            .font(.headline)
           Spacer()
           Text("识别：\(editedDraft.detectedLanguage)  翻译为：\(editedDraft.targetLanguage)")
             .font(.caption)
@@ -559,18 +403,17 @@ private struct DraftPanelContent: View {
           text: $sourceText,
           onSubmit: submit
         )
-        .frame(minHeight: 116, idealHeight: 150, maxHeight: 260)
+        .frame(minHeight: 64, idealHeight: 82, maxHeight: 180)
       }
     }
   }
 
   private var draftTranslationContent: some View {
     GlassPanel {
-      VStack(alignment: .leading, spacing: 14) {
-        SectionHeader(
-          title: "译文",
-          systemImage: "text.bubble"
-        ) {
+      VStack(alignment: .leading, spacing: 8) {
+        HStack {
+          Label("译文", systemImage: "text.bubble")
+            .font(.headline)
           Spacer()
           Text("待开始")
             .font(.caption)
@@ -580,7 +423,7 @@ private struct DraftPanelContent: View {
 
         Text("按 Return 开始翻译")
           .foregroundStyle(.white.opacity(0.55))
-          .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
+          .frame(maxWidth: .infinity, minHeight: 28, alignment: .leading)
 
         HStack {
           Spacer()
