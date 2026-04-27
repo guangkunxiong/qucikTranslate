@@ -5,6 +5,7 @@ import SwiftUI
 @MainActor
 final class FloatingPanelController {
   private let panelCornerRadius: CGFloat = 22
+  private let defaultContentSize = NSSize(width: 560, height: 320)
   private var panel: NSPanel?
   private var pinState = FloatingPanelPinState()
   private var localMouseMonitor: Any?
@@ -50,6 +51,9 @@ final class FloatingPanelController {
 
     hostingController.view.layoutSubtreeIfNeeded()
     if shouldResetSize {
+      let defaultSize = preferredDefaultContentSize()
+      hostingController.view.setFrameSize(defaultSize)
+      hostingController.view.layoutSubtreeIfNeeded()
       let size = hostingController.view.fittingSize
       panel.setContentSize(preferredContentSize(for: panel, fittingSize: size))
       position(panel)
@@ -161,11 +165,20 @@ final class FloatingPanelController {
   private func preferredContentSize(for panel: NSPanel, fittingSize: NSSize) -> NSSize {
     let screen = screenForPanel()
     let maxHeight = max(280, screen.visibleFrame.height - 72)
-    let maxWidth = max(460, screen.visibleFrame.width - 72)
+    let width = preferredDefaultContentSize().width
 
     return NSSize(
-      width: min(max(fittingSize.width, 560), maxWidth),
+      width: width,
       height: min(max(fittingSize.height, 320), maxHeight)
+    )
+  }
+
+  private func preferredDefaultContentSize() -> NSSize {
+    let screen = screenForPanel()
+    let maxWidth = max(460, screen.visibleFrame.width - 72)
+    return NSSize(
+      width: min(defaultContentSize.width, maxWidth),
+      height: defaultContentSize.height
     )
   }
 

@@ -157,7 +157,32 @@ final class AppModel: ObservableObject {
 
   private func translateCurrentSelection() async {
     let text = await selectedTextCaptureService.captureSelectedText()
+    guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+      showLastTranslationOrEmptyDraft()
+      return
+    }
+
     showDraft(text)
+  }
+
+  private func showLastTranslationOrEmptyDraft() {
+    guard let record = historyStore.records.first else {
+      showDraft("")
+      return
+    }
+
+    showResult(
+      TranslationResult(
+        id: record.id,
+        originalText: record.originalText,
+        translatedText: record.translatedText,
+        detectedLanguage: record.detectedLanguage,
+        targetLanguage: record.targetLanguage,
+        model: record.model,
+        timestamp: record.timestamp
+      ),
+      saved: true
+    )
   }
 
   private func showDraft(_ text: String) {
@@ -259,7 +284,12 @@ final class AppModel: ObservableObject {
         )
       }
 
-      let trimmedTranslation = translatedText.trimmingCharacters(in: .whitespacesAndNewlines)
+      let parsedResult = TranslationResponseParser.parseAssistantContent(
+        translatedText,
+        sourceText: draft.sourceText,
+        model: trimmedModel
+      )
+      let trimmedTranslation = parsedResult.translatedText.trimmingCharacters(in: .whitespacesAndNewlines)
       guard !trimmedTranslation.isEmpty else {
         throw OpenAICompatibleClientError.missingAssistantContent
       }
@@ -267,28 +297,42 @@ final class AppModel: ObservableObject {
       let result = TranslationResult(
         originalText: draft.sourceText,
         translatedText: trimmedTranslation,
-        detectedLanguage: draft.detectedLanguage,
-        targetLanguage: draft.targetLanguage,
+        detectedLanguage: normalizedParsedLanguage(parsedResult.detectedLanguage, fallback: draft.detectedLanguage),
+        targetLanguage: normalizedParsedLanguage(parsedResult.targetLanguage, fallback: draft.targetLanguage),
         model: trimmedModel
       )
       _ = try historyStore.add(result)
       historyRevision += 1
-      floatingPanelController.show(
-        state: .result(result, saved: true),
-        displayedLanguages: settings.displayedLanguages,
-        onStartTranslation: { [weak self] draft in
-          self?.startPendingTranslation(draft: draft)
-        },
-        onCopy: { [weak self] value in
-          self?.copyTranslation(value)
-        },
-        onSpeak: { [weak self] text, languageHint in
-          self?.speakText(text, languageHint: languageHint)
-        }
-      )
+      showResult(result, saved: true)
       logger.info("Streaming translation completed")
     } catch {
       showError(AppError.requestFailed(error.localizedDescription))
+    }
+  }
+
+  private func showResult(_ result: TranslationResult, saved: Bool) {
+    floatingPanelController.show(
+      state: .result(result, saved: saved),
+      displayedLanguages: settingsStore.settings.displayedLanguages,
+      onStartTranslation: { [weak self] draft in
+        self?.startPendingTranslation(draft: draft)
+      },
+      onCopy: { [weak self] value in
+        self?.copyTranslation(value)
+      },
+      onSpeak: { [weak self] text, languageHint in
+        self?.speakText(text, languageHint: languageHint)
+      }
+    )
+  }
+
+  private func normalizedParsedLanguage(_ language: String, fallback: String) -> String {
+    let value = language.trimmingCharacters(in: .whitespacesAndNewlines)
+    switch value {
+    case "", "未知", "自动":
+      return fallback
+    default:
+      return value
     }
   }
 

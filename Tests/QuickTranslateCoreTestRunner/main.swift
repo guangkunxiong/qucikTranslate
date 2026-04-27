@@ -125,6 +125,17 @@ let tests: [TestCase] = [
     try expectEqual(result.targetLanguage, "Simplified Chinese", "target language")
     try expectEqual(result.model, "gpt-test", "model")
   },
+  TestCase(name: "TranslationResponseParserTests/testParsesPrettyStructuredJSONTranslation") {
+    let content = """
+    {"detected_language": "中文", "target_language": "英文", "translation": "A new bug."}
+    """
+
+    let result = TranslationResponseParser.parseAssistantContent(content, sourceText: "新的 bug。", model: "gpt-test")
+
+    try expectEqual(result.detectedLanguage, "中文", "pretty JSON detected language")
+    try expectEqual(result.targetLanguage, "英文", "pretty JSON target language")
+    try expectEqual(result.translatedText, "A new bug.", "pretty JSON translation")
+  },
   TestCase(name: "TranslationResponseParserTests/testFallsBackToPlainTextWhenJSONCannotBeParsed") {
     let result = TranslationResponseParser.parseAssistantContent("你好", sourceText: "hello", model: "gpt-test")
 
