@@ -20,7 +20,8 @@ struct EditableSourceTextView: NSViewRepresentable {
     textView.delegate = context.coordinator
     textView.onSubmit = onSubmit
     textView.font = .preferredFont(forTextStyle: .body)
-    textView.textColor = .labelColor
+    textView.textColor = .white
+    textView.insertionPointColor = .white
     textView.drawsBackground = false
     textView.isRichText = false
     textView.allowsUndo = true
@@ -46,6 +47,8 @@ struct EditableSourceTextView: NSViewRepresentable {
     }
 
     textView.onSubmit = onSubmit
+    textView.textColor = .white
+    textView.insertionPointColor = .white
     if textView.string != text {
       textView.string = text
     }

@@ -5,7 +5,7 @@ MODE="${1:-run}"
 APP_NAME="QuickTranslate"
 DISPLAY_NAME="快捷翻译"
 BUNDLE_ID="com.only77.QuickTranslate"
-MIN_SYSTEM_VERSION="13.0"
+MIN_SYSTEM_VERSION="26.0"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_DIR="$ROOT_DIR/dist"

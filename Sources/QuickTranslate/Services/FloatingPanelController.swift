@@ -56,7 +56,7 @@ final class FloatingPanelController {
 
   private func makePanel() -> NSPanel {
     let panel = KeyableFloatingPanel(
-      contentRect: NSRect(x: 0, y: 0, width: 460, height: 260),
+      contentRect: NSRect(x: 0, y: 0, width: 620, height: 500),
       styleMask: [.nonactivatingPanel, .titled, .utilityWindow, .resizable, .fullSizeContentView],
       backing: .buffered,
       defer: false
@@ -70,7 +70,7 @@ final class FloatingPanelController {
     panel.backgroundColor = .clear
     panel.isOpaque = false
     panel.hasShadow = true
-    panel.minSize = NSSize(width: 420, height: 260)
+    panel.minSize = NSSize(width: 520, height: 360)
     panel.standardWindowButton(.closeButton)?.isHidden = true
     panel.standardWindowButton(.miniaturizeButton)?.isHidden = true
     panel.standardWindowButton(.zoomButton)?.isHidden = true
@@ -149,11 +149,11 @@ final class FloatingPanelController {
   private func preferredContentSize(for panel: NSPanel, fittingSize: NSSize) -> NSSize {
     let screen = screenForPanel()
     let maxHeight = max(260, screen.visibleFrame.height - 72)
-    let maxWidth = max(420, screen.visibleFrame.width - 72)
+    let maxWidth = max(520, screen.visibleFrame.width - 72)
 
     return NSSize(
-      width: min(max(fittingSize.width, 460), maxWidth),
-      height: min(max(fittingSize.height, 320), maxHeight)
+      width: min(max(fittingSize.width, 620), maxWidth),
+      height: min(max(fittingSize.height, 500), maxHeight)
     )
   }
 
