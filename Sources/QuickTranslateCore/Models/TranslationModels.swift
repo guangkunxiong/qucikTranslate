@@ -59,6 +59,15 @@ public struct TranslationDraft: Equatable, Identifiable, Sendable {
     TranslationDraft(id: id, sourceText: sourceText)
   }
 
+  public static func fromEditableSource(_ sourceText: String, basedOn draft: TranslationDraft? = nil) -> TranslationDraft {
+    let trimmedText = sourceText.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard let draft else {
+      return TranslationDraft(sourceText: trimmedText)
+    }
+
+    return draft.replacingSourceText(trimmedText)
+  }
+
   public static func fromCapturedSelection(_ sourceText: String) -> TranslationDraft {
     TranslationDraft(sourceText: sourceText.trimmingCharacters(in: .whitespacesAndNewlines))
   }

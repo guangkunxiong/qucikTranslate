@@ -106,31 +106,11 @@ struct FloatingPanelView: View {
   }
 
   private func sourceContent(_ draft: TranslationDraft) -> some View {
-    VStack(alignment: .leading, spacing: 10) {
-      HStack {
-        Label("原文", systemImage: "text.quote")
-          .font(.subheadline.weight(.semibold))
-        Spacer()
-        Text("识别：\(draft.detectedLanguage)  翻译为：\(draft.targetLanguage)")
-          .font(.caption)
-          .foregroundStyle(.secondary)
-        SpeechButton(
-          text: draft.sourceText,
-          languageHint: draft.detectedLanguage,
-          help: "朗读原文",
-          onSpeak: onSpeak
-        )
-      }
-
-      textBlock(draft.sourceText)
-        .frame(minHeight: 128, alignment: .topLeading)
-    }
-    .padding(12)
-    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
-    .overlay {
-      RoundedRectangle(cornerRadius: 8)
-        .stroke(Color(nsColor: .separatorColor).opacity(0.5), lineWidth: 1)
-    }
+    EditableSourcePanelContent(
+      draft: draft,
+      onStartTranslation: onStartTranslation,
+      onSpeak: onSpeak
+    )
   }
 
   private func streamingTranslationContent(_ translatedText: String, targetLanguage: String) -> some View {
@@ -251,6 +231,71 @@ private struct SpeechButton: View {
     .buttonStyle(.borderless)
     .disabled(isDisabled)
     .help(help)
+  }
+}
+
+private struct EditableSourcePanelContent: View {
+  let draft: TranslationDraft
+  let onStartTranslation: (String) -> Void
+  let onSpeak: (String, String?) -> Void
+  @State private var sourceText: String
+
+  init(
+    draft: TranslationDraft,
+    onStartTranslation: @escaping (String) -> Void,
+    onSpeak: @escaping (String, String?) -> Void
+  ) {
+    self.draft = draft
+    self.onStartTranslation = onStartTranslation
+    self.onSpeak = onSpeak
+    _sourceText = State(initialValue: draft.sourceText)
+  }
+
+  private var editedDraft: TranslationDraft {
+    draft.replacingSourceText(sourceText)
+  }
+
+  private var trimmedSourceText: String {
+    sourceText.trimmingCharacters(in: .whitespacesAndNewlines)
+  }
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 10) {
+      HStack {
+        Label("原文", systemImage: "text.quote")
+          .font(.subheadline.weight(.semibold))
+        Spacer()
+        Text("识别：\(editedDraft.detectedLanguage)  翻译为：\(editedDraft.targetLanguage)")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+        SpeechButton(
+          text: sourceText,
+          languageHint: editedDraft.detectedLanguage,
+          help: "朗读原文",
+          onSpeak: onSpeak
+        )
+      }
+
+      EditableSourceTextView(
+        text: $sourceText,
+        onSubmit: submit
+      )
+      .frame(minHeight: 88, idealHeight: 128, maxHeight: 220)
+    }
+    .padding(12)
+    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
+    .overlay {
+      RoundedRectangle(cornerRadius: 8)
+        .stroke(Color(nsColor: .separatorColor).opacity(0.5), lineWidth: 1)
+    }
+  }
+
+  private func submit() {
+    guard !trimmedSourceText.isEmpty else {
+      return
+    }
+
+    onStartTranslation(trimmedSourceText)
   }
 }
 

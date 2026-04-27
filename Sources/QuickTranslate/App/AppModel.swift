@@ -188,17 +188,14 @@ final class AppModel: ObservableObject {
   }
 
   private func beginPendingTranslation(sourceText: String?) async {
-    guard let draft = pendingDraft else {
-      return
-    }
-
-    let editedText = sourceText?.trimmingCharacters(in: .whitespacesAndNewlines) ?? draft.sourceText
+    let editedText = (sourceText ?? pendingDraft?.sourceText ?? "")
+      .trimmingCharacters(in: .whitespacesAndNewlines)
     guard !editedText.isEmpty else {
       showError(AppError.noSelectedText)
       return
     }
 
-    let editedDraft = draft.replacingSourceText(editedText)
+    let editedDraft = TranslationDraft.fromEditableSource(editedText, basedOn: pendingDraft)
     pendingDraft = nil
     await streamTranslate(draft: editedDraft)
   }

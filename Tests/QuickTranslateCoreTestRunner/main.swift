@@ -180,6 +180,22 @@ let tests: [TestCase] = [
     try expectEqual(edited.detectedLanguage, "中文", "detected language")
     try expectEqual(edited.targetLanguage, "英文", "target language")
   },
+  TestCase(name: "TranslationDraftTests/testCreatesEditableSubmissionWithoutPendingDraft") {
+    let draft = TranslationDraft.fromEditableSource("  hello  ")
+
+    try expectEqual(draft.sourceText, "hello", "editable source text")
+    try expectEqual(draft.detectedLanguage, "非中文", "detected language")
+    try expectEqual(draft.targetLanguage, "简体中文", "target language")
+  },
+  TestCase(name: "TranslationDraftTests/testEditableSubmissionKeepsPendingDraftIdentity") {
+    let pending = TranslationDraft(sourceText: "hello")
+    let draft = TranslationDraft.fromEditableSource("  你好  ", basedOn: pending)
+
+    try expectEqual(draft.id, pending.id, "draft id")
+    try expectEqual(draft.sourceText, "你好", "editable source text")
+    try expectEqual(draft.detectedLanguage, "中文", "detected language")
+    try expectEqual(draft.targetLanguage, "英文", "target language")
+  },
   TestCase(name: "SpeechUtteranceRequestTests/testTrimsOuterWhitespaceAndPreservesInnerFormatting") {
     let request = SpeechUtteranceRequest(text: "  hello\nworld  ", languageHint: "英文")
 
