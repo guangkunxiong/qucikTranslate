@@ -4,6 +4,7 @@ import SwiftUI
 
 @MainActor
 final class FloatingPanelController {
+  private let panelCornerRadius: CGFloat = 22
   private var panel: NSPanel?
   private var pinState = FloatingPanelPinState()
   private var localMouseMonitor: Any?
@@ -11,12 +12,14 @@ final class FloatingPanelController {
 
   func show(
     state: FloatingPanelState,
-    onStartTranslation: @escaping (String) -> Void = { _ in },
+    displayedLanguages: [String],
+    onStartTranslation: @escaping (TranslationDraft) -> Void = { _ in },
     onCopy: @escaping (String) -> Void,
     onSpeak: @escaping (String, String?) -> Void = { _, _ in }
   ) {
     let rootView = FloatingPanelView(
       state: state,
+      displayedLanguages: displayedLanguages,
       isPinned: pinState.isPinned,
       onPinChanged: { [weak self] isPinned in
         self?.setPinned(isPinned)
@@ -30,10 +33,19 @@ final class FloatingPanelController {
     )
 
     let hostingController = NSHostingController(rootView: rootView)
+    hostingController.view.wantsLayer = true
+    hostingController.view.layer?.cornerRadius = panelCornerRadius
+    hostingController.view.layer?.masksToBounds = true
+    hostingController.view.layer?.backgroundColor = NSColor.clear.cgColor
+
     let panel = panel ?? makePanel()
     let shouldResetSize = !panel.isVisible
     let existingFrame = panel.frame
     panel.contentViewController = hostingController
+    panel.contentView?.wantsLayer = true
+    panel.contentView?.layer?.cornerRadius = panelCornerRadius
+    panel.contentView?.layer?.masksToBounds = true
+    panel.contentView?.layer?.backgroundColor = NSColor.clear.cgColor
     self.panel = panel
 
     hostingController.view.layoutSubtreeIfNeeded()
@@ -64,7 +76,7 @@ final class FloatingPanelController {
     panel.level = .floating
     panel.collectionBehavior = [.canJoinAllSpaces, .transient, .ignoresCycle]
     panel.isReleasedWhenClosed = false
-    panel.isMovableByWindowBackground = true
+    panel.isMovableByWindowBackground = false
     panel.titleVisibility = .hidden
     panel.titlebarAppearsTransparent = true
     panel.backgroundColor = .clear

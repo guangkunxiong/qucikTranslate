@@ -10,6 +10,7 @@ struct SettingsView: View {
   @State private var systemPrompt = ""
   @State private var shortcut = ""
   @State private var automaticallyBidirectional = true
+  @State private var selectedDisplayedLanguages = Set<String>()
   @State private var statusMessage = ""
 
   var body: some View {
@@ -29,6 +30,20 @@ struct SettingsView: View {
           .font(.body)
           .frame(minHeight: 130)
           .border(.quaternary)
+      }
+
+      Section("语言下拉框") {
+        Text("选择浮窗里显示的源语言和目标语言选项。")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+
+        ForEach(AppSettings.availableLanguages, id: \.self) { language in
+          Toggle(language, isOn: displayedLanguageBinding(language))
+        }
+
+        Button("恢复默认语言") {
+          selectedDisplayedLanguages = Set(AppSettings.defaultDisplayedLanguages)
+        }
       }
 
       Section("快捷键") {
@@ -91,6 +106,7 @@ struct SettingsView: View {
     systemPrompt = settings.systemPrompt
     shortcut = settings.hotKey.displayString
     automaticallyBidirectional = settings.automaticallyBidirectional
+    selectedDisplayedLanguages = Set(settings.displayedLanguages)
   }
 
   private func save() {
@@ -104,16 +120,37 @@ struct SettingsView: View {
       return
     }
 
+    let displayedLanguages = AppSettings.availableLanguages.filter {
+      selectedDisplayedLanguages.contains($0)
+    }
+    guard !displayedLanguages.isEmpty else {
+      statusMessage = "请至少选择一种语言"
+      return
+    }
+
     let settings = AppSettings(
       baseURL: baseURL,
       model: model.trimmingCharacters(in: .whitespacesAndNewlines),
       hotKey: hotKey,
       systemPrompt: systemPrompt,
-      automaticallyBidirectional: automaticallyBidirectional
+      automaticallyBidirectional: automaticallyBidirectional,
+      displayedLanguages: displayedLanguages
     )
 
     appModel.saveSettings(settings)
     appModel.saveAPIKey(apiKey)
     statusMessage = "已保存"
+  }
+
+  private func displayedLanguageBinding(_ language: String) -> Binding<Bool> {
+    Binding {
+      selectedDisplayedLanguages.contains(language)
+    } set: { isSelected in
+      if isSelected {
+        selectedDisplayedLanguages.insert(language)
+      } else {
+        selectedDisplayedLanguages.remove(language)
+      }
+    }
   }
 }

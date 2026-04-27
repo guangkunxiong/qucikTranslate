@@ -165,8 +165,9 @@ final class AppModel: ObservableObject {
     pendingDraft = draft
     floatingPanelController.show(
       state: .draft(draft),
-      onStartTranslation: { [weak self] sourceText in
-        self?.startPendingTranslation(sourceText: sourceText)
+      displayedLanguages: settingsStore.settings.displayedLanguages,
+      onStartTranslation: { [weak self] draft in
+        self?.startPendingTranslation(draft: draft)
       },
       onCopy: { [weak self] value in
         self?.copyTranslation(value)
@@ -177,25 +178,31 @@ final class AppModel: ObservableObject {
     )
   }
 
-  private func startPendingTranslation(sourceText: String? = nil) {
+  private func startPendingTranslation(draft: TranslationDraft? = nil) {
     guard !isTranslating else {
       return
     }
 
     Task {
-      await beginPendingTranslation(sourceText: sourceText)
+      await beginPendingTranslation(draft: draft)
     }
   }
 
-  private func beginPendingTranslation(sourceText: String?) async {
-    let editedText = (sourceText ?? pendingDraft?.sourceText ?? "")
+  private func beginPendingTranslation(draft: TranslationDraft?) async {
+    let submittedDraft = draft ?? pendingDraft
+    let editedText = (submittedDraft?.sourceText ?? "")
       .trimmingCharacters(in: .whitespacesAndNewlines)
     guard !editedText.isEmpty else {
       showError(AppError.noSelectedText)
       return
     }
 
-    let editedDraft = TranslationDraft.fromEditableSource(editedText, basedOn: pendingDraft)
+    let editedDraft = TranslationDraft(
+      id: submittedDraft?.id ?? UUID(),
+      sourceText: editedText,
+      detectedLanguage: submittedDraft?.detectedLanguage,
+      targetLanguage: submittedDraft?.targetLanguage
+    )
     pendingDraft = nil
     await streamTranslate(draft: editedDraft)
   }
@@ -225,6 +232,7 @@ final class AppModel: ObservableObject {
       var translatedText = ""
       floatingPanelController.show(
         state: .streaming(draft, translatedText: translatedText),
+        displayedLanguages: settings.displayedLanguages,
         onCopy: { [weak self] value in
           self?.copyTranslation(value)
         },
@@ -241,6 +249,7 @@ final class AppModel: ObservableObject {
         translatedText += delta
         floatingPanelController.show(
           state: .streaming(draft, translatedText: translatedText),
+          displayedLanguages: settings.displayedLanguages,
           onCopy: { [weak self] value in
             self?.copyTranslation(value)
           },
@@ -266,6 +275,10 @@ final class AppModel: ObservableObject {
       historyRevision += 1
       floatingPanelController.show(
         state: .result(result, saved: true),
+        displayedLanguages: settings.displayedLanguages,
+        onStartTranslation: { [weak self] draft in
+          self?.startPendingTranslation(draft: draft)
+        },
         onCopy: { [weak self] value in
           self?.copyTranslation(value)
         },
@@ -284,6 +297,7 @@ final class AppModel: ObservableObject {
     logger.error("Translation error: \(message, privacy: .public)")
     floatingPanelController.show(
       state: .error(message),
+      displayedLanguages: settingsStore.settings.displayedLanguages,
       onCopy: { [weak self] value in
         self?.copyTranslation(value)
       },

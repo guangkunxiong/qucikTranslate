@@ -34,7 +34,24 @@ let tests: [TestCase] = [
     try expectEqual(settings.model, "gpt-4o-mini", "default model")
     try expectEqual(settings.hotKey.displayString, "Option+D", "default hotkey")
     try expect(settings.automaticallyBidirectional, "automatic bidirectional translation should be enabled")
+    try expectEqual(
+      settings.displayedLanguages,
+      ["中文", "英文", "日语", "韩语", "泰语", "法语", "德语", "西班牙语"],
+      "default displayed languages"
+    )
     try expect(settings.systemPrompt.contains("中文原文翻译成英文"), "default prompt should describe Chinese source behavior in Simplified Chinese")
+  },
+  TestCase(name: "AppSettingsTests/testDecodesMissingDisplayedLanguagesWithDefaults") {
+    let settings = AppSettings.defaults
+    let encoded = try JSONEncoder().encode(settings)
+    guard var json = try JSONSerialization.jsonObject(with: encoded) as? [String: Any] else {
+      throw TestFailure(message: "encoded settings should be a JSON object")
+    }
+    json.removeValue(forKey: "displayedLanguages")
+    let legacyData = try JSONSerialization.data(withJSONObject: json)
+    let decoded = try JSONDecoder().decode(AppSettings.self, from: legacyData)
+
+    try expectEqual(decoded.displayedLanguages, AppSettings.defaultDisplayedLanguages, "legacy settings displayed languages")
   },
   TestCase(name: "AppErrorTests/testUserFacingErrorsAreSimplifiedChinese") {
     try expectEqual(AppError.noSelectedText.errorDescription, "未检测到选中文本。", "no selected text error")
@@ -163,8 +180,20 @@ let tests: [TestCase] = [
   TestCase(name: "TranslationDraftTests/testInfersNonChineseToSimplifiedChineseDirection") {
     let draft = TranslationDraft(sourceText: "hello world")
 
-    try expectEqual(draft.detectedLanguage, "非中文", "detected language")
-    try expectEqual(draft.targetLanguage, "简体中文", "target language")
+    try expectEqual(draft.detectedLanguage, "英文", "detected language")
+    try expectEqual(draft.targetLanguage, "中文", "target language")
+  },
+  TestCase(name: "TranslationDraftTests/testInfersConfiguredScriptLanguages") {
+    let japanese = TranslationDraft(sourceText: "こんにちは")
+    let korean = TranslationDraft(sourceText: "안녕하세요")
+    let thai = TranslationDraft(sourceText: "สวัสดี")
+
+    try expectEqual(japanese.detectedLanguage, "日语", "Japanese detected language")
+    try expectEqual(japanese.targetLanguage, "中文", "Japanese target language")
+    try expectEqual(korean.detectedLanguage, "韩语", "Korean detected language")
+    try expectEqual(korean.targetLanguage, "中文", "Korean target language")
+    try expectEqual(thai.detectedLanguage, "泰语", "Thai detected language")
+    try expectEqual(thai.targetLanguage, "中文", "Thai target language")
   },
   TestCase(name: "TranslationDraftTests/testCreatesEmptyEditableDraftFromMissingSelection") {
     let draft = TranslationDraft.fromCapturedSelection(" \n ")
@@ -184,8 +213,8 @@ let tests: [TestCase] = [
     let draft = TranslationDraft.fromEditableSource("  hello  ")
 
     try expectEqual(draft.sourceText, "hello", "editable source text")
-    try expectEqual(draft.detectedLanguage, "非中文", "detected language")
-    try expectEqual(draft.targetLanguage, "简体中文", "target language")
+    try expectEqual(draft.detectedLanguage, "英文", "detected language")
+    try expectEqual(draft.targetLanguage, "中文", "target language")
   },
   TestCase(name: "TranslationDraftTests/testEditableSubmissionKeepsPendingDraftIdentity") {
     let pending = TranslationDraft(sourceText: "hello")

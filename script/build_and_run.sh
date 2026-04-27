@@ -30,7 +30,7 @@ cp "$BUILD_BINARY" "$APP_BINARY"
 chmod +x "$APP_BINARY"
 cp "$APP_ICON" "$APP_RESOURCES/QuickTranslate.icns"
 if [[ -d "$RESOURCE_BUNDLE" ]]; then
-  cp -R "$RESOURCE_BUNDLE" "$APP_BUNDLE/${APP_NAME}_${APP_NAME}.bundle"
+  cp -R "$RESOURCE_BUNDLE" "$APP_RESOURCES/${APP_NAME}_${APP_NAME}.bundle"
 fi
 
 cat >"$INFO_PLIST" <<PLIST
