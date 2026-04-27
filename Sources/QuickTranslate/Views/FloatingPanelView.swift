@@ -26,6 +26,7 @@ struct FloatingPanelView: View {
   let onPinChanged: (Bool) -> Void
   let onStartTranslation: (String) -> Void
   let onCopy: (String) -> Void
+  let onSpeak: (String, String?) -> Void
   let onClose: () -> Void
   @State private var pinned: Bool
 
@@ -35,12 +36,14 @@ struct FloatingPanelView: View {
     onPinChanged: @escaping (Bool) -> Void,
     onStartTranslation: @escaping (String) -> Void,
     onCopy: @escaping (String) -> Void,
+    onSpeak: @escaping (String, String?) -> Void,
     onClose: @escaping () -> Void
   ) {
     self.state = state
     self.onPinChanged = onPinChanged
     self.onStartTranslation = onStartTranslation
     self.onCopy = onCopy
+    self.onSpeak = onSpeak
     self.onClose = onClose
     _pinned = State(initialValue: isPinned)
   }
@@ -66,11 +69,12 @@ struct FloatingPanelView: View {
       case let .draft(draft):
         DraftPanelContent(
           draft: draft,
-          onStartTranslation: onStartTranslation
+          onStartTranslation: onStartTranslation,
+          onSpeak: onSpeak
         )
       case let .streaming(draft, translatedText):
         sourceContent(draft)
-        streamingTranslationContent(translatedText)
+        streamingTranslationContent(translatedText, targetLanguage: draft.targetLanguage)
       case let .result(result, saved):
         resultContent(result, saved: saved)
       case let .error(message):
@@ -110,6 +114,12 @@ struct FloatingPanelView: View {
         Text("识别：\(draft.detectedLanguage)  翻译为：\(draft.targetLanguage)")
           .font(.caption)
           .foregroundStyle(.secondary)
+        SpeechButton(
+          text: draft.sourceText,
+          languageHint: draft.detectedLanguage,
+          help: "朗读原文",
+          onSpeak: onSpeak
+        )
       }
 
       textBlock(draft.sourceText)
@@ -123,7 +133,7 @@ struct FloatingPanelView: View {
     }
   }
 
-  private func streamingTranslationContent(_ translatedText: String) -> some View {
+  private func streamingTranslationContent(_ translatedText: String, targetLanguage: String) -> some View {
     VStack(alignment: .leading, spacing: 10) {
       HStack {
         Label("译文", systemImage: "text.bubble")
@@ -131,6 +141,12 @@ struct FloatingPanelView: View {
         Spacer()
         ProgressView()
           .controlSize(.small)
+        SpeechButton(
+          text: translatedText,
+          languageHint: targetLanguage,
+          help: "朗读译文",
+          onSpeak: onSpeak
+        )
       }
 
       textBlock(
@@ -166,6 +182,12 @@ struct FloatingPanelView: View {
           Text(saved ? "已保存" : "未保存")
             .font(.caption)
             .foregroundStyle(saved ? .green : .secondary)
+          SpeechButton(
+            text: result.translatedText,
+            languageHint: result.targetLanguage,
+            help: "朗读译文",
+            onSpeak: onSpeak
+          )
         }
 
         textBlock(result.translatedText)
@@ -210,17 +232,42 @@ struct FloatingPanelView: View {
   }
 }
 
+private struct SpeechButton: View {
+  let text: String
+  let languageHint: String?
+  let help: String
+  let onSpeak: (String, String?) -> Void
+
+  private var isDisabled: Bool {
+    text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+  }
+
+  var body: some View {
+    Button {
+      onSpeak(text, languageHint)
+    } label: {
+      Image(systemName: "speaker.wave.2")
+    }
+    .buttonStyle(.borderless)
+    .disabled(isDisabled)
+    .help(help)
+  }
+}
+
 private struct DraftPanelContent: View {
   let draft: TranslationDraft
   let onStartTranslation: (String) -> Void
+  let onSpeak: (String, String?) -> Void
   @State private var sourceText: String
 
   init(
     draft: TranslationDraft,
-    onStartTranslation: @escaping (String) -> Void
+    onStartTranslation: @escaping (String) -> Void,
+    onSpeak: @escaping (String, String?) -> Void
   ) {
     self.draft = draft
     self.onStartTranslation = onStartTranslation
+    self.onSpeak = onSpeak
     _sourceText = State(initialValue: draft.sourceText)
   }
 
@@ -248,6 +295,12 @@ private struct DraftPanelContent: View {
         Text("识别：\(editedDraft.detectedLanguage)  翻译为：\(editedDraft.targetLanguage)")
           .font(.caption)
           .foregroundStyle(.secondary)
+        SpeechButton(
+          text: sourceText,
+          languageHint: editedDraft.detectedLanguage,
+          help: "朗读原文",
+          onSpeak: onSpeak
+        )
       }
 
       EditableSourceTextView(

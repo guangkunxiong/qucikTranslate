@@ -180,6 +180,25 @@ let tests: [TestCase] = [
     try expectEqual(edited.detectedLanguage, "中文", "detected language")
     try expectEqual(edited.targetLanguage, "英文", "target language")
   },
+  TestCase(name: "SpeechUtteranceRequestTests/testTrimsOuterWhitespaceAndPreservesInnerFormatting") {
+    let request = SpeechUtteranceRequest(text: "  hello\nworld  ", languageHint: "英文")
+
+    try expectEqual(request.normalizedText, "hello\nworld", "normalized text")
+  },
+  TestCase(name: "SpeechUtteranceRequestTests/testMapsChineseAndEnglishHintsToVoiceLanguageCodes") {
+    let chinese = SpeechUtteranceRequest(text: "你好", languageHint: "简体中文")
+    let english = SpeechUtteranceRequest(text: "hello", languageHint: "英文")
+
+    try expectEqual(chinese.voiceLanguageCode, "zh-CN", "Chinese voice language")
+    try expectEqual(english.voiceLanguageCode, "en-US", "English voice language")
+  },
+  TestCase(name: "SpeechUtteranceRequestTests/testInfersVoiceLanguageFromGenericHintAndText") {
+    let chinese = SpeechUtteranceRequest(text: "你好", languageHint: "自动")
+    let latin = SpeechUtteranceRequest(text: "hello", languageHint: "非中文")
+
+    try expectEqual(chinese.voiceLanguageCode, "zh-CN", "Chinese text fallback")
+    try expectEqual(latin.voiceLanguageCode, "en-US", "Latin text fallback")
+  },
   TestCase(name: "StreamingChatCompletionParserTests/testParsesContentDelta") {
     let line = #"data: {"choices":[{"delta":{"content":"你"}}]}"#
 

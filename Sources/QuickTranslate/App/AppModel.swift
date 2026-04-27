@@ -19,6 +19,7 @@ final class AppModel: ObservableObject {
   private let hotKeyService: HotKeyService
   private let floatingPanelController: FloatingPanelController
   private let mainWindowController: MainWindowController
+  private let speechService: SpeechService
   private var started = false
   private var pendingDraft: TranslationDraft?
   private var apiKeyCache = CachedSecretValue()
@@ -36,7 +37,8 @@ final class AppModel: ObservableObject {
     selectedTextCaptureService: SelectedTextCaptureService = SelectedTextCaptureService(),
     hotKeyService: HotKeyService = HotKeyService(),
     floatingPanelController: FloatingPanelController = FloatingPanelController(),
-    mainWindowController: MainWindowController = MainWindowController()
+    mainWindowController: MainWindowController = MainWindowController(),
+    speechService: SpeechService = SpeechService()
   ) {
     self.settingsStore = settingsStore
     self.historyStore = historyStore
@@ -46,6 +48,7 @@ final class AppModel: ObservableObject {
     self.hotKeyService = hotKeyService
     self.floatingPanelController = floatingPanelController
     self.mainWindowController = mainWindowController
+    self.speechService = speechService
   }
 
   func start() {
@@ -143,6 +146,15 @@ final class AppModel: ObservableObject {
     NSPasteboard.general.setString(text, forType: .string)
   }
 
+  func speakText(_ text: String, languageHint: String?) {
+    speechService.speak(
+      SpeechUtteranceRequest(
+        text: text,
+        languageHint: languageHint
+      )
+    )
+  }
+
   private func translateCurrentSelection() async {
     let text = await selectedTextCaptureService.captureSelectedText()
     showDraft(text)
@@ -158,6 +170,9 @@ final class AppModel: ObservableObject {
       },
       onCopy: { [weak self] value in
         self?.copyTranslation(value)
+      },
+      onSpeak: { [weak self] text, languageHint in
+        self?.speakText(text, languageHint: languageHint)
       }
     )
   }
@@ -215,6 +230,9 @@ final class AppModel: ObservableObject {
         state: .streaming(draft, translatedText: translatedText),
         onCopy: { [weak self] value in
           self?.copyTranslation(value)
+        },
+        onSpeak: { [weak self] text, languageHint in
+          self?.speakText(text, languageHint: languageHint)
         }
       )
 
@@ -228,6 +246,9 @@ final class AppModel: ObservableObject {
           state: .streaming(draft, translatedText: translatedText),
           onCopy: { [weak self] value in
             self?.copyTranslation(value)
+          },
+          onSpeak: { [weak self] text, languageHint in
+            self?.speakText(text, languageHint: languageHint)
           }
         )
       }
@@ -250,6 +271,9 @@ final class AppModel: ObservableObject {
         state: .result(result, saved: true),
         onCopy: { [weak self] value in
           self?.copyTranslation(value)
+        },
+        onSpeak: { [weak self] text, languageHint in
+          self?.speakText(text, languageHint: languageHint)
         }
       )
       logger.info("Streaming translation completed")
@@ -265,6 +289,9 @@ final class AppModel: ObservableObject {
       state: .error(message),
       onCopy: { [weak self] value in
         self?.copyTranslation(value)
+      },
+      onSpeak: { [weak self] text, languageHint in
+        self?.speakText(text, languageHint: languageHint)
       }
     )
   }

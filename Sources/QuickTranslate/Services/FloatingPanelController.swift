@@ -12,7 +12,8 @@ final class FloatingPanelController {
   func show(
     state: FloatingPanelState,
     onStartTranslation: @escaping (String) -> Void = { _ in },
-    onCopy: @escaping (String) -> Void
+    onCopy: @escaping (String) -> Void,
+    onSpeak: @escaping (String, String?) -> Void = { _, _ in }
   ) {
     let rootView = FloatingPanelView(
       state: state,
@@ -22,6 +23,7 @@ final class FloatingPanelController {
       },
       onStartTranslation: onStartTranslation,
       onCopy: onCopy,
+      onSpeak: onSpeak,
       onClose: { [weak self] in
         self?.close()
       }
