@@ -13,7 +13,7 @@ struct QuickTranslateApp: App {
   }
 
   var body: some Scene {
-    MenuBarExtra("快捷翻译", systemImage: "character.book.closed") {
+    MenuBarExtra {
       Button("翻译选中文本") {
         appModel.translateSelection()
       }
@@ -24,6 +24,12 @@ struct QuickTranslateApp: App {
       Button("退出") {
         NSApplication.shared.terminate(nil)
       }
+    } label: {
+      Image(nsImage: StatusBarIcon.image)
+        .resizable()
+        .scaledToFit()
+        .frame(width: 18, height: 18)
+        .accessibilityLabel("快捷翻译")
     }
   }
 }
